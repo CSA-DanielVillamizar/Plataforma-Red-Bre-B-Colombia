@@ -18,7 +18,7 @@ Enterprise-grade distributed transaction orchestrator for the Colombian Bre-B in
 ### 🏗️ Descripción General
 **Plataforma de Orquestación Transaccional para la Red Bre-B** es una solución distribuida de alta disponibilidad y misión crítica diseñada para integrar comercios corporativos al sistema de pagos inmediatos de Colombia (Bre-B). El sistema opera bajo estrictos Acuerdos de Nivel de Servicio (SLA de < 20 segundos por transacción y límites de 1,000 UVB), asegurando una coreografía financiera impecable: resolución de llaves (DICE), retención preventiva de fondos en el core local, liquidación central (MOL) y compensación o reverso automático en caso de fallos.
 
-Desarrollado como el proyecto central de ingeniería para la asignatura **Programación Distribuida (PDI74)** en la *Institución Universitaria ITM*, bajo la supervisión arquitectónica del **Prof. Daniel Andrey Villamizar Araque**.
+Desarrollado como el proyecto central de ingeniería para la asignatura **Programación Distribuida (190304014-1)** en la *Institución Universitaria ITM*, bajo la supervisión arquitectónica del **Prof. M.Sc.IoT Daniel Andrey Villamizar Araque**.
 
 ---
 
