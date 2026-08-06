@@ -134,7 +134,7 @@ gh pr create \
 
 If anything fails mid-flight, the Saga triggers an **automatic compensation** that refunds the user's balance — money is never left trapped.
 
-Developed as the core enterprise project for the **Distributed Programming (190304014-1)** course at *Institución Universitaria ITM*, under the architectural supervision of **Prof. Daniel Andrey Villamizar Araque**.
+Developed as the core enterprise project for the **Distributed Programming (190304014-1)** course at *Institución Universitaria ITM*, under the architectural supervision of **Prof. M.Sc.IoT Daniel Andrey Villamizar Araque**.
 
 ---
 
