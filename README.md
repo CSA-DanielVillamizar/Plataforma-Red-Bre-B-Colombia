@@ -61,11 +61,11 @@ La plataforma implementa un diseño orientado a microservicios reactivos y trans
 ### 👥 Escuadrón de Ingeniería (ITM Grupo Remoto)
 
 * **Squad Fintech & Core (Sagas y MassTransit):** Sara Bermúdez, Mónica Puentes, Samuel Osorio, Estiben Montoya, Sergio Álvarez + 6 integrantes adicionales
-* **Squad DevOps, Infra y Cloud:** Stefany Builes, José Miguel Buriticá, David Ramírez, Duban Guerra + 5 integrantes adicionales
-* **Squad Arquitectura, UI y QA:** Juan Daniel Duque, Leidy Mora, Valentina Alvarez, Juan Carlos Herazo + 5 integrantes adicionales
-* **Squad Datos, Tuning y Observabilidad:** Jalvi Villegas, Diego Valencia, Yulieth Urrego, Juan Sebastián Cardona + 5 integrantes adicionales
+* **Squad DevOps, Infra y Cloud:** Stefany Builes, José Miguel Buriticá, David Ramírez, Duban Guerra + 6 integrantes adicionales
+* **Squad Arquitectura, UI y QA:** Juan Daniel Duque, Leidy Mora, Valentina Alvarez, Juan Carlos Herazo + 6 integrantes adicionales
+* **Squad Datos, Tuning y Observabilidad:** Jalvi Villegas, Diego Valencia, Yulieth Urrego, Juan Sebastián Cardona + 6 integrantes adicionales
 
-📋 **Roster completo con usuarios de GitHub:** [`docs/squads.md`](docs/squads.md) — 38 de 43 estudiantes confirmados. Úsalo para saber a quién asignar como revisor de tu Pull Request.
+📋 **Roster completo con usuarios de GitHub:** [`docs/squads.md`](docs/squads.md) — 42 de 43 estudiantes confirmados. Úsalo para saber a quién asignar como revisor de tu Pull Request.
 
 ---
 
@@ -167,11 +167,11 @@ The platform implements a reactive microservices design built for distributed tr
 ### 👥 Engineering Squad (ITM Remote Group)
 
 * **Fintech & Core Squad (Sagas & MassTransit):** Sara Bermúdez, Mónica Puentes, Samuel Osorio, Estiben Montoya, Sergio Álvarez + 6 additional members
-* **DevOps, Infra & Cloud Squad:** Stefany Builes, José Miguel Buriticá, David Ramírez, Duban Guerra + 5 additional members
-* **Architecture, UI & QA Squad:** Juan Daniel Duque, Leidy Mora, Valentina Alvarez, Juan Carlos Herazo + 5 additional members
-* **Data, Tuning & Observability Squad:** Jalvi Villegas, Diego Valencia, Yulieth Urrego, Juan Sebastián Cardona + 5 additional members
+* **DevOps, Infra & Cloud Squad:** Stefany Builes, José Miguel Buriticá, David Ramírez, Duban Guerra + 6 additional members
+* **Architecture, UI & QA Squad:** Juan Daniel Duque, Leidy Mora, Valentina Alvarez, Juan Carlos Herazo + 6 additional members
+* **Data, Tuning & Observability Squad:** Jalvi Villegas, Diego Valencia, Yulieth Urrego, Juan Sebastián Cardona + 6 additional members
 
-📋 **Full roster with GitHub handles:** [`docs/squads.md`](docs/squads.md) — 38 of 43 students confirmed. Use it to know who to assign as reviewer on your Pull Request.
+📋 **Full roster with GitHub handles:** [`docs/squads.md`](docs/squads.md) — 42 of 43 students confirmed. Use it to know who to assign as reviewer on your Pull Request.
 
 ---
 

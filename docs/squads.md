@@ -2,7 +2,7 @@
 
 Roster oficial de escuadrones para el proyecto transversal del curso. Este archivo es la fuente de verdad para asignar revisores en Pull Requests y para saber a quién preguntarle qué durante las clases.
 
-**Estado del roster:** 38 de 43 estudiantes confirmados. Los pendientes se añaden a su squad tan pronto compartan su usuario de GitHub — ver la sección [Pendientes](#pendientes) al final.
+**Estado del roster:** 42 de 43 estudiantes confirmados. Los pendientes se añaden a su squad tan pronto compartan su usuario de GitHub — ver la sección [Pendientes](#pendientes) al final.
 
 ---
 
@@ -33,12 +33,13 @@ Responsables de Docker Compose, despliegues, observabilidad de infraestructura y
 | Stefany Builes | [@Stefany023](https://github.com/Stefany023) |
 | Jose Miguel Buritica | [@BuritiCrack](https://github.com/BuritiCrack) |
 | David Ramirez | [@davidramirez-beep](https://github.com/davidramirez-beep) |
-| Duban Guerra | *(usuario pendiente)* |
+| Duban Guerra Castro | [@duguerrac](https://github.com/duguerrac) |
 | Edwin Ramirez Gonzalez | [@edwinramirezgon](https://github.com/edwinramirezgon) |
 | Jorge Elias Builes Chavarría | [@JorgeBuiles](https://github.com/JorgeBuiles) |
 | Juan Diego Quintero Ortiz | [@JuanDiego24](https://github.com/JuanDiego24) |
 | Felipe Ramirez Loaiza | [@FelipeRamirezLoaiza](https://github.com/FelipeRamirezLoaiza) |
 | Juan David Velasquez Murillo | [@Juandavm12](https://github.com/Juandavm12) |
+| Evelyn Muñetones Álvarez | [@Eve1254](https://github.com/Eve1254) |
 
 ## Squad Arquitectura, UI y QA
 
@@ -55,6 +56,7 @@ Responsables del diseño de contratos (SDD), Event Storming, revisión arquitect
 | Salome Ruiz Gallego | [@SalomeRG97](https://github.com/SalomeRG97) |
 | Luis Guillermo Gonzalez Ayala | [@memouk](https://github.com/memouk) |
 | David Stiven Diaz Duarte | [@EndyG34](https://github.com/EndyG34) |
+| Johan Sneider Garzon Salazar | [@JohanGarzon9905](https://github.com/JohanGarzon9905) |
 
 ## Squad Datos, Tuning y Observabilidad
 
@@ -71,6 +73,7 @@ Responsables de PostgreSQL, tuning de queries/bloqueos, OpenTelemetry y Serilog.
 | Danny Mateo Hernández Sánchez | [@dannymateo](https://github.com/dannymateo) |
 | Juan Esteban Quintero Acosta | [@Juanes-Quintero](https://github.com/Juanes-Quintero) |
 | Miguel Angel Giraldo Florez | [@miguel-Angel-G](https://github.com/miguel-Angel-G) |
+| Juan Manuel Valencia Giraldo | [@Juanchos2905](https://github.com/Juanchos2905) |
 
 ---
 
@@ -87,8 +90,8 @@ gh pr create \
 
 ## Pendientes
 
-- **Duban Guerra** (Squad DevOps, Infra y Cloud) — usuario de GitHub por confirmar.
 - **Juan Sebastian Cardona** (Squad Datos, Tuning y Observabilidad) — usuario de GitHub por confirmar.
-- 5 estudiantes adicionales del curso (43 en total) aún no han compartido su usuario.
+
+Es el único estudiante del curso (43 en total) que aún no ha compartido su usuario.
 
 Cuando se confirmen, actualízalos aquí vía Pull Request siguiendo el mismo flujo descrito en el [README](../README.md#flujo-de-trabajo-gitops--sdd).
