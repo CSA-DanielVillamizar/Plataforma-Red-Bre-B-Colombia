@@ -106,6 +106,38 @@ Escenario: Transferencia revertida
 
 ---
 
+## HU-05 — Confiabilidad del pago ante fallos internos
+
+**Bounded context:** Orquestación (Saga)
+**Squad sugerido:** Fintech & Core
+
+**Como** cliente bancario beneficiario de un pago,
+**quiero** que mi pago se complete de forma confiable aunque alguno de los pasos internos del proceso falle,
+**para** tener la certeza de que el dinero llega correctamente o, si algo sale mal, se revierte sin dejarme en un estado inconsistente (dinero descontado sin acreditar, por ejemplo).
+
+### Criterios de Aceptación
+
+```gherkin
+Escenario: Pago exitoso de principio a fin
+  Dado que el pagador confirmó una operación válida
+  Cuando todos los pasos internos del proceso se completan correctamente
+  Entonces el cliente bancario beneficiario ve el dinero acreditado en menos de 5 segundos desde la confirmación
+
+Escenario: Falla interna con reversión
+  Dado que un paso interno falló después de que los fondos ya fueron retenidos
+  Cuando el sistema detecta la falla
+  Entonces revierte automáticamente los pasos anteriores en menos de 10 segundos desde la detección de la falla, y ninguno de los clientes bancarios involucrados queda con saldo incorrecto
+
+Escenario: Notificación al pagador tras una reversión
+  Dado que una transferencia fue revertida
+  Cuando el pagador consulta el estado de su operación
+  Entonces recibe un mensaje en lenguaje no técnico explicando qué pasó, no un código de error
+```
+
+**Nota de procedencia:** propuesta originalmente por un equipo del curso como una sola historia con dos actores mezclados (beneficiario y pagador) y criterios en prosa. Se dividió el tercer escenario para separar al pagador como actor propio, y se convirtió a Gherkin en la revisión cruzada de la Clase 0. Métrica de éxito asociada: % de pagos que terminan en estado consistente + tiempo promedio de reversión ante fallas.
+
+---
+
 ## Trazabilidad
 
 | HU | Bounded Context | Squad sugerido | Estado |
@@ -114,5 +146,6 @@ Escenario: Transferencia revertida
 | HU-02 | API Gateway / Orquestación | Arquitectura, UI y QA + Fintech & Core | Especificada |
 | HU-03 | Orquestación (Saga) + Cuentas | Fintech & Core + Datos, Tuning y Obs. | Especificada |
 | HU-04 | Cuentas | Datos, Tuning y Observabilidad | Especificada |
+| HU-05 | Orquestación (Saga) | Fintech & Core | Especificada |
 
 Cada HU se convierte en su propio Issue (`gh issue create`) cuando el squad dueño la tome para implementar, siguiendo el flujo descrito en el [README](../../README.md#flujo-de-trabajo-gitops--sdd).
