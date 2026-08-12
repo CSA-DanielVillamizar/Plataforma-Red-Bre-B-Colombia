@@ -1,0 +1,20 @@
+extends:
+  - spectral:oas
+  - spectral:asyncapi
+rules:
+  operation-tags:
+    description: Every OpenAPI operation must declare a tag.
+    given: $.paths[*][*]
+    severity: error
+    then:
+      field: tags
+      function: truthy
+  event-version-required:
+    description: Every AsyncAPI payload must carry a schema version.
+    given: $.components.schemas.EventEnvelope.required
+    severity: error
+    then:
+      function: enumeration
+      functionOptions:
+        values:
+          - version
