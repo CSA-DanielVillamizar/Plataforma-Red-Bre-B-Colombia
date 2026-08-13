@@ -1,0 +1,271 @@
+asyncapi: 2.6.0
+info:
+  title: Eventos de Dominio - Saga de Transferencia Bre-B
+  description: Contrato de eventos para coordinar transferencias, confirmaciones y compensaciones.
+  version: 1.0.0
+  contact:
+    name: Squad Arquitectura, UI y QA
+    url: https://github.com/CSA-DanielVillamizar/Plataforma-Red-Bre-B-Colombia
+    email: arquitectura@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/license/mit
+defaultContentType: application/json
+servers:
+  development:
+    url: broker.bre-b.example.com:5672
+    protocol: amqp
+    description: Broker conceptual para desarrollo e integracion.
+tags:
+  - name: Orquestacion
+    description: Eventos de coordinacion, confirmacion y compensacion.
+channels:
+  transferencia.fondos-retenidos:
+    description: El MOL retuvo los fondos y comienza la ventana de confirmacion.
+    publish:
+      operationId: publicarFondosRetenidos
+      description: Publica la retencion de fondos y comienza la ventana de confirmacion.
+      message:
+        $ref: '#/components/messages/FondosRetenidos'
+  transferencia.abono-confirmado:
+    description: El Core Bancario destino confirmo el abono.
+    publish:
+      operationId: publicarAbonoConfirmado
+      description: Publica la confirmacion del abono por el core bancario destino.
+      message:
+        $ref: '#/components/messages/AbonoConfirmado'
+  transferencia.confirmada:
+    description: La transferencia finalizo correctamente.
+    publish:
+      operationId: publicarTransferenciaConfirmada
+      description: Publica el cierre exitoso de la transferencia.
+      message:
+        $ref: '#/components/messages/TransferenciaConfirmada'
+  transferencia.falla-detectada:
+    description: La Saga detecto un fallo despues de retener fondos.
+    publish:
+      operationId: publicarFallaDeTransferenciaDetectada
+      description: Publica un fallo detectado despues de retener los fondos.
+      message:
+        $ref: '#/components/messages/FallaDeTransferenciaDetectada'
+  transferencia.compensada:
+    description: El saldo del pagador fue reintegrado correctamente.
+    publish:
+      operationId: publicarTransferenciaCompensada
+      description: Publica el reintegro exitoso del saldo del pagador.
+      message:
+        $ref: '#/components/messages/TransferenciaCompensada'
+  transferencia.compensacion-reintentada:
+    description: El reintegro fallo y fue reintentado automaticamente.
+    publish:
+      operationId: publicarCompensacionReintentada
+      description: Publica un nuevo intento de compensacion despues de un fallo.
+      message:
+        $ref: '#/components/messages/CompensacionReintentada'
+  transferencia.soporte-manual-requerido:
+    description: Tres intentos de compensacion fallaron y requieren soporte.
+    publish:
+      operationId: publicarSoporteManualRequerido
+      description: Publica el escalamiento despues de tres fallos de compensacion.
+      message:
+        $ref: '#/components/messages/SoporteManualRequerido'
+  transferencia.pago-revertido:
+    description: La transferencia fue revertida con un motivo legible.
+    publish:
+      operationId: publicarPagoRevertido
+      description: Publica la reversion con un motivo legible para el pagador.
+      message:
+        $ref: '#/components/messages/PagoRevertido'
+components:
+  messages:
+    FondosRetenidos:
+      name: FondosRetenidos
+      title: Fondos retenidos
+      summary: El MOL retuvo el monto de la transferencia.
+      payload:
+        $ref: '#/components/schemas/FondosRetenidosPayload'
+    AbonoConfirmado:
+      name: AbonoConfirmado
+      title: Abono confirmado
+      payload:
+        $ref: '#/components/schemas/AbonoConfirmadoPayload'
+    TransferenciaConfirmada:
+      name: TransferenciaConfirmada
+      title: Transferencia confirmada
+      payload:
+        $ref: '#/components/schemas/TransferenciaConfirmadaPayload'
+    FallaDeTransferenciaDetectada:
+      name: FallaDeTransferenciaDetectada
+      title: Falla de transferencia detectada
+      payload:
+        $ref: '#/components/schemas/FallaDeTransferenciaDetectadaPayload'
+    TransferenciaCompensada:
+      name: TransferenciaCompensada
+      title: Transferencia compensada
+      payload:
+        $ref: '#/components/schemas/TransferenciaCompensadaPayload'
+    CompensacionReintentada:
+      name: CompensacionReintentada
+      title: Compensacion reintentada
+      payload:
+        $ref: '#/components/schemas/CompensacionReintentadaPayload'
+    SoporteManualRequerido:
+      name: SoporteManualRequerido
+      title: Soporte manual requerido
+      payload:
+        $ref: '#/components/schemas/SoporteManualRequeridoPayload'
+    PagoRevertido:
+      name: PagoRevertido
+      title: Pago revertido
+      payload:
+        $ref: '#/components/schemas/PagoRevertidoPayload'
+  schemas:
+    EventEnvelope:
+      type: object
+      required:
+        - eventId
+        - transferenciaId
+        - occurredAt
+        - version
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          description: Identificador unico del evento para deduplicacion.
+        transferenciaId:
+          type: string
+          format: uuid
+          description: Identificador de correlacion de la transferencia.
+        occurredAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          minimum: 1
+          description: Version del esquema del evento.
+      additionalProperties: false
+    FondosRetenidosPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          required:
+            - montoUVB
+            - timeoutMs
+          properties:
+            montoUVB:
+              type: number
+              format: double
+              exclusiveMinimum: 0
+            timeoutMs:
+              type: integer
+              minimum: 1
+              example: 15000
+          additionalProperties: false
+    AbonoConfirmadoPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          required:
+            - confirmadoAt
+          properties:
+            confirmadoAt:
+              type: string
+              format: date-time
+          additionalProperties: false
+    TransferenciaConfirmadaPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          required:
+            - confirmadoAt
+          properties:
+            confirmadoAt:
+              type: string
+              format: date-time
+          additionalProperties: false
+    FallaDeTransferenciaDetectadaPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          required:
+            - motivo
+            - detectedAt
+          properties:
+            motivo:
+              type: string
+              minLength: 1
+            detectedAt:
+              type: string
+              format: date-time
+          additionalProperties: false
+    TransferenciaCompensadaPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          required:
+            - montoUVB
+            - motivo
+            - compensatedAt
+          properties:
+            montoUVB:
+              type: number
+              format: double
+              exclusiveMinimum: 0
+            motivo:
+              type: string
+              minLength: 1
+            compensatedAt:
+              type: string
+              format: date-time
+          additionalProperties: false
+    CompensacionReintentadaPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          required:
+            - intento
+            - maxIntentos
+            - motivo
+          properties:
+            intento:
+              type: integer
+              minimum: 2
+              maximum: 3
+            maxIntentos:
+              type: integer
+              const: 3
+            motivo:
+              type: string
+              minLength: 1
+          additionalProperties: false
+    SoporteManualRequeridoPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          required:
+            - intentosFallidos
+            - motivo
+          properties:
+            intentosFallidos:
+              type: integer
+              const: 3
+            motivo:
+              type: string
+              minLength: 1
+          additionalProperties: false
+    PagoRevertidoPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+        - type: object
+          required:
+            - motivo
+            - lenguajeUsuario
+          properties:
+            motivo:
+              type: string
+              minLength: 1
+            lenguajeUsuario:
+              type: string
+              minLength: 1
+              description: Explicacion no tecnica que se muestra al pagador.
+          additionalProperties: false

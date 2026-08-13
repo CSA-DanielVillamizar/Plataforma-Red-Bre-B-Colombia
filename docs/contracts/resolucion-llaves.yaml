@@ -1,0 +1,93 @@
+openapi: 3.0.3
+info:
+  title: Servicio de Resolucion de Llaves - Red Bre-B
+  description: Contrato para resolver una llave Bre-B mediante DICE.
+  version: 1.0.0
+  contact:
+    name: Squad Arquitectura, UI y QA
+servers:
+  - url: https://api.bre-b.example.com
+    description: Endpoint conceptual del ecosistema Bre-B
+tags:
+  - name: Resolucion de Llaves
+    description: Operaciones para resolver llaves Bre-B mediante DICE.
+paths:
+  /llaves/{llave}/resolver:
+    get:
+      operationId: resolverLlave
+      summary: Resuelve una llave a una cuenta destino
+      description: Consulta DICE y devuelve la cuenta y entidad financiera asociadas.
+      tags:
+        - Resolucion de Llaves
+      parameters:
+        - $ref: '#/components/parameters/Llave'
+      responses:
+        '200':
+          description: Llave resuelta correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlaveResuelta'
+        '404':
+          description: La llave no esta registrada en DICE.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '502':
+          description: DICE no esta disponible o devolvio una respuesta invalida.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+components:
+  parameters:
+    Llave:
+      name: llave
+      in: path
+      required: true
+      description: Llave Bre-B, por ejemplo celular, correo o documento.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 120
+      example: '+573001234567'
+  schemas:
+    LlaveResuelta:
+      type: object
+      required:
+        - cuentaDestino
+        - entidadFinanciera
+      properties:
+        cuentaDestino:
+          type: string
+          description: Identificador de la cuenta destino normalizado por DICE.
+          minLength: 1
+        entidadFinanciera:
+          type: string
+          description: Identificador de la entidad financiera destino.
+          minLength: 1
+      additionalProperties: false
+    Problem:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        correlationId:
+          type: string
+          format: uuid
+      additionalProperties: false
