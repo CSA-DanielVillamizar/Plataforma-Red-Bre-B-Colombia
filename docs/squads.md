@@ -19,7 +19,6 @@ Responsables del Servicio de Orquestación de Pagos (MassTransit + Automatonymou
 | Sergio Álvarez | [@sergioter23](https://github.com/sergioter23) |
 | Leonel Antonio Martinez Silgado | [@Leoces95](https://github.com/Leoces95) |
 | Jean Carlos Gonzalez Goyeneche | [@JeanGonzalez10](https://github.com/JeanGonzalez10) |
-| Juan David Alvarez Garcia | [@Juan-AG](https://github.com/Juan-AG) |
 | Juliana Arroyave Arango | [@Juli2609](https://github.com/Juli2609) |
 | Kevin Santiago Martinez Molina | [@Kevinmartinez07](https://github.com/Kevinmartinez07) |
 | Paula Andrea Calderón Quintero | [@Paucq](https://github.com/Paucq) |
@@ -74,6 +73,7 @@ Responsables de PostgreSQL, tuning de queries/bloqueos, OpenTelemetry y Serilog.
 | Juan Esteban Quintero Acosta | [@Juanes-Quintero](https://github.com/Juanes-Quintero) |
 | Miguel Angel Giraldo Florez | [@miguel-Angel-G](https://github.com/miguel-Angel-G) |
 | Juan Manuel Valencia Giraldo | [@Juanchos2905](https://github.com/Juanchos2905) |
+| Juan David Alvarez Garcia | [@Juan-AG](https://github.com/Juan-AG) |
 
 ---
 
