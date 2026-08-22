@@ -1,0 +1,35 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.12-management   # 3.13 falla en Docker Desktop/Windows (.erlang.cookie eacces)
+    container_name: breb-rabbitmq
+    ports:
+      - "5672:5672"      # AMQP: por aquí viajan los mensajes
+      - "15672:15672"    # Panel web de administración
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    # ⚠️ El healthcheck NO puede usar rabbitmq-diagnostics: corre como root,
+    # crea /var/lib/rabbitmq/.erlang.cookie con permisos de root, y luego el
+    # usuario 'rabbitmq' no puede leerlo → el contenedor muere con eacces.
+    # Verificamos el puerto AMQP, que no toca Erlang ni la cookie.
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/5672' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+
+  postgres:
+    image: postgres:16
+    container_name: breb-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dev_only_password
+      POSTGRES_DB: brebcuentas
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
