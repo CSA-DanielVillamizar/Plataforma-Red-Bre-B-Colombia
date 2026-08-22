@@ -116,6 +116,71 @@ gh pr create \
 4. Antes de tu primer PR, lee los criterios de aceptación (Gherkin) del Issue que vas a resolver — un PR que no los cumple no se fusiona.
 
 ---
+
+### 💻 Levantar el proyecto localmente
+
+**Prerrequisitos:** .NET 8 SDK · Docker Desktop · `dotnet tool install --global dotnet-ef`
+
+**1. Levantar la infraestructura** (RabbitMQ + PostgreSQL):
+
+```bash
+docker compose up -d
+```
+
+Espera a que ambos digan `(healthy)` — RabbitMQ tarda ~40 segundos:
+
+```bash
+docker compose ps
+```
+
+**2. Crear las tablas:**
+
+```bash
+cd src/Breb.Cuentas && dotnet ef database update
+```
+
+**3. Insertar una cuenta de prueba:**
+
+```bash
+docker exec -it breb-postgres psql -U postgres -d brebcuentas -c "INSERT INTO \"Cuentas\" (\"Id\", \"SaldoDisponible\", \"SaldoRetenido\") VALUES ('11111111-1111-1111-1111-111111111111', 5000, 0);"
+```
+
+**4. Ejecutar la aplicación:**
+
+```bash
+cd src/Breb.Cuentas && dotnet run
+```
+
+Swagger queda en `http://localhost:5051/swagger` · Panel de RabbitMQ en `http://localhost:15672` (`guest`/`guest`)
+
+#### ⚠️ Notas importantes
+
+| Tema | Detalle |
+|---|---|
+| **MassTransit** | Fijado en **8.5.2**. La v9 requiere licencia comercial y la app no arranca sin ella. **No actualices** estos paquetes. |
+| **RabbitMQ** | Fijado en **3.12-management**. La 3.13 falla en Docker Desktop/Windows con `.erlang.cookie: eacces`. |
+| **PostgreSQL** | Expuesto en el puerto **5433** (no 5432) para no chocar con instalaciones locales. |
+| **Healthcheck** | No usa `rabbitmq-diagnostics`: corre como root y corrompe los permisos de la cookie de Erlang, matando el contenedor. |
+| **Credenciales** | `dev_only_password` y `guest/guest` son de **desarrollo local únicamente**. Nunca uses estos valores fuera de tu máquina. |
+
+#### Verificar que el Outbox funciona
+
+```bash
+# 1. Apaga la mensajería
+docker compose stop rabbitmq
+
+# 2. Dispara una transferencia desde Swagger → responde HTTP 200 igual
+
+# 3. El evento quedó guardado, esperando:
+docker exec -it breb-postgres psql -U postgres -d brebcuentas -c "SELECT COUNT(*) FROM \"OutboxMessage\";"
+
+# 4. Revive la mensajería → el mensaje sale solo
+docker compose start rabbitmq
+```
+
+> Si `OutboxMessage` da **0** después de una transferencia exitosa, **es lo correcto**: MassTransit borra la fila una vez entregado el mensaje. Para verla con contenido hay que apagar RabbitMQ primero, como en el paso 1.
+
+---
 ---
 
 <a name="english"></a>
