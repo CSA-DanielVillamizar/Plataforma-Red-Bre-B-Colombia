@@ -27,4 +27,19 @@ public class Cuenta
         SaldoDisponible -= monto;
         SaldoRetenido += monto;
     }
+
+    // La COMPENSACIÓN: el inverso exacto de Retener().
+    // Toda acción de una saga necesita su inversa escrita desde el diseño.
+    public void LiberarRetencion(decimal monto)
+    {
+        if (monto <= 0)
+            throw new InvalidOperationException("El monto debe ser positivo.");
+
+        if (monto > SaldoRetenido)
+            throw new InvalidOperationException(
+                "No se puede liberar más de lo retenido.");
+
+        SaldoRetenido -= monto;
+        SaldoDisponible += monto;
+    }
 }

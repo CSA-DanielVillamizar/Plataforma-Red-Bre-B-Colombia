@@ -1,6 +1,9 @@
 services:
   rabbitmq:
-    image: rabbitmq:3.12-management   # 3.13 falla en Docker Desktop/Windows (.erlang.cookie eacces)
+    # Imagen oficial de MassTransit: RabbitMQ 3.13 + management + el plugin
+    # rabbitmq_delayed_message_exchange YA habilitado (lo necesita la Saga
+    # de la Semana 3 para sus timeouts).
+    image: masstransit/rabbitmq:latest
     container_name: breb-rabbitmq
     ports:
       - "5672:5672"      # AMQP: por aquí viajan los mensajes
