@@ -17,9 +17,15 @@ builder.Host.UseSerilog((ctx, cfg) => cfg
 // ⚠️ Port=5433 — debe coincidir con el lado IZQUIERDO del docker-compose
 // SSL Mode=Disable: es una BD local en Docker; sin esto Npgsql intenta un
 // handshake SSL que Docker Desktop en Windows aborta (SocketException 10053).
+// Maximum Pool Size: Npgsql abre hasta 100 conexiones por instancia si no se
+// le dice otra cosa. PostgreSQL acepta 100 EN TOTAL (max_connections). Con tres
+// instancias, la demanda es de 300 contra un cupo de 100, y la base responde
+// "53300: sorry, too many clients already" — el error que vimos al escalar.
+// La base de datos es un recurso COMPARTIDO: el cupo se reparte, no se replica.
 var connectionString = "Host=localhost;Port=5433;Database=brebcuentas;" +
                        "Username=postgres;Password=dev_only_password;" +
-                       "SSL Mode=Disable;Timeout=30;Command Timeout=60";
+                       "SSL Mode=Disable;Timeout=30;Command Timeout=60;" +
+                       "Maximum Pool Size=25;Minimum Pool Size=5";
 
 builder.Services.AddDbContext<CuentasDbContext>(o =>
     o.UseNpgsql(connectionString));
@@ -79,27 +85,51 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
     async (Guid cuentaId, decimal montoUVB,
            CuentasDbContext db, IPublishEndpoint publishEndpoint) =>
     {
-        var cuenta = await db.Cuentas.FirstOrDefaultAsync(c => c.Id == cuentaId);
-        if (cuenta is null) return Results.NotFound("Cuenta no existe.");
+        // ── Reintento por concurrencia optimista (Semana 5) ─────────────────
+        // El token xmin de Cuenta hace que dos retenciones simultáneas sobre la
+        // misma cuenta NO se pisen: la segunda recibe DbUpdateConcurrencyException
+        // en vez de perder silenciosamente la actualización.
+        // Detectar el conflicto es solo la mitad; hay que RESOLVERLO. Aquí se
+        // relee el saldo fresco y se vuelve a intentar. Sin este bucle, el
+        // usuario recibiría un 500 por algo que el sistema puede resolver solo.
+        const int maxIntentos = 5;
 
-        var transferenciaId = Guid.NewGuid();
-
-        cuenta.Retener(montoUVB);                     // 1. regla de dominio
-
-        await publishEndpoint.Publish(new FondosRetenidos
+        for (var intento = 1; ; intento++)
         {
-            TransferenciaId = transferenciaId,
-            CuentaOrigenId = cuentaId,                 // la saga lo usa para compensar
-            MontoUVB = montoUVB,
-            TimeoutMs = 15000
-        });                                            // 2. → va al Outbox
+            var cuenta = await db.Cuentas.FirstOrDefaultAsync(c => c.Id == cuentaId);
+            if (cuenta is null) return Results.NotFound("Cuenta no existe.");
 
-        await db.SaveChangesAsync();                   // 3. UNA transacción
+            var transferenciaId = Guid.NewGuid();
 
-        Log.Information("Fondos retenidos: {TransferenciaId} por {Monto} UVB",
-                        transferenciaId, montoUVB);
+            cuenta.Retener(montoUVB);                     // 1. regla de dominio
 
-        return Results.Ok(new { transferenciaId, montoUVB });
+            await publishEndpoint.Publish(new FondosRetenidos
+            {
+                TransferenciaId = transferenciaId,
+                CuentaOrigenId = cuentaId,                 // la saga lo usa para compensar
+                MontoUVB = montoUVB,
+                TimeoutMs = 15000
+            });                                            // 2. → va al Outbox
+
+            try
+            {
+                await db.SaveChangesAsync();               // 3. UNA transacción
+
+                Log.Information("Fondos retenidos: {TransferenciaId} por {Monto} UVB",
+                                transferenciaId, montoUVB);
+
+                return Results.Ok(new { transferenciaId, montoUVB });
+            }
+            catch (DbUpdateConcurrencyException) when (intento < maxIntentos)
+            {
+                // Otra petición modificó la fila entre nuestra lectura y nuestra
+                // escritura. Limpiamos el rastreo de EF para releer datos frescos.
+                Log.Warning("Conflicto de concurrencia en cuenta {Cuenta}, intento {Intento}",
+                            cuentaId, intento);
+                foreach (var entry in db.ChangeTracker.Entries().ToList())
+                    entry.State = EntityState.Detached;
+            }
+        }
     });
 
 // Simula la confirmación del core bancario destino.
