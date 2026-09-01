@@ -1,6 +1,6 @@
 # Clase 5 — Instructivo Técnico
 ## Escalamiento, particionamiento, competing consumers y el defecto que perdía dinero
-### Red Bre-B Colombia · 190304014-1 · Lunes 31 de agosto de 2026
+### Red Bre-B Colombia · 190304014-1 · Miércoles 2 de septiembre de 2026
 
 Este documento es el **cómo**. El **qué decir** está en `Clase5_Guion_Consolidado.md`.
 
