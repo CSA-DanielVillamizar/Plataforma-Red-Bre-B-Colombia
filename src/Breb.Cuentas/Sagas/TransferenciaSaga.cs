@@ -75,12 +75,39 @@ public class TransferenciaSaga : MassTransitStateMachine<TransferenciaSagaState>
                     MontoUVB = ctx.Saga.MontoUVB,
                     Motivo = "Timeout de confirmacion (15s)"
                 })
-                .TransitionTo(Compensando));
+                .TransitionTo(Compensando),
+
+            // ── Llegada fuera de orden (Semana 5) ──────────────────────────
+            // ¿Cómo puede llegar un reintegro si esta saga todavía no expiró?
+            // Asi: el timeout SI se disparo y publico la compensacion, pero la
+            // transaccion que ademas movia la saga a Compensando fue abortada
+            // por PostgreSQL con 40001. La compensacion ya estaba en el Outbox
+            // y salio igual; la saga, en cambio, se quedo en este estado.
+            //
+            // Bajo entrega al-menos-una-vez y con reintentos, los mensajes NO
+            // llegan en el orden que uno dibujo en el tablero. Una maquina de
+            // estados debe tolerar TODO evento que fisicamente pueda llegarle
+            // en ese estado; si no, lanza NotAcceptedStateMachineException, el
+            // mensaje se reintenta hasta agotarse y la saga queda zombi.
+            //
+            // El dinero ya volvio a la cuenta: lo correcto es apagar el reloj
+            // y cerrar.
+            When(FondosReintegradosEvt)
+                .Then(ctx => ctx.Saga.MotivoCompensacion ??= "Reintegro recibido fuera de orden")
+                .Unschedule(TimeoutConfirmacion)
+                .Finalize());
 
         // ── Cierre de la compensación ──
         During(Compensando,
             When(FondosReintegradosEvt)
-                .Finalize());
+                .Finalize(),
+
+            // Un timeout que llega tarde, cuando ya estamos compensando, no
+            // tiene nada que hacer — pero si no se declara, MassTransit lo
+            // trata como error. Ignorarlo explicitamente es la diferencia
+            // entre un sistema tolerante y uno que se atasca.
+            When(TimeoutConfirmacion.Received)
+                .Then(ctx => ctx.Saga.MotivoCompensacion ??= "Timeout duplicado ignorado"));
 
         // Borra la fila cuando la saga termina.
         SetCompletedWhenFinalized();
