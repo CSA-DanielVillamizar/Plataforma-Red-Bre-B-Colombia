@@ -11,6 +11,7 @@ public class CuentasDbContext : DbContext
         : base(options) { }
 
     public DbSet<Cuenta> Cuentas => Set<Cuenta>();
+    public DbSet<Retencion> Retenciones => Set<Retencion>();
     public DbSet<MensajeProcesado> MensajesProcesados => Set<MensajeProcesado>();
     public DbSet<TransferenciaSagaState> TransferenciaSagas => Set<TransferenciaSagaState>();
 
@@ -49,6 +50,29 @@ public class CuentasDbContext : DbContext
              .HasColumnType("xid")
              .ValueGeneratedOnAddOrUpdate()
              .IsConcurrencyToken();
+        });
+
+        // ── Retención como entidad propia (Semana 6) ───────────────────────
+        modelBuilder.Entity<Retencion>(e =>
+        {
+            // La clave primaria ES el id de la transferencia. Con eso, "una
+            // transferencia retiene exactamente una vez" deja de ser un chequeo
+            // que alguien tiene que acordarse de escribir, y pasa a ser una
+            // restricción que la base de datos hace cumplir siempre.
+            e.HasKey(r => r.TransferenciaId);
+
+            e.Property(r => r.MontoUVB).HasPrecision(18, 2);
+
+            // Para responder "¿qué retenciones vivas tiene esta cuenta?" sin
+            // recorrer la tabla entera. Índice parcial: solo indexa las que
+            // siguen vivas, que son las únicas por las que se pregunta.
+            e.HasIndex(r => new { r.CuentaId, r.Liberada })
+             .HasFilter("\"Liberada\" = false");
+
+            e.HasOne<Cuenta>()
+             .WithMany()
+             .HasForeignKey(r => r.CuentaId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<MensajeProcesado>(e =>

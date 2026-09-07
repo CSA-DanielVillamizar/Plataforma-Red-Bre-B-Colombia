@@ -154,7 +154,10 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
 
         var transferenciaId = Guid.NewGuid();
 
-        cuenta.Retener(montoUVB);                     // 1. regla de dominio
+        // Semana 6: Retener ahora devuelve la RETENCIÓN, no solo muta un número.
+        // Queda una fila que dice exactamente quién retuvo cuánto y cuándo.
+        var retencion = cuenta.Retener(transferenciaId, montoUVB);
+        db.Retenciones.Add(retencion);
 
         await publishEndpoint.Publish(new FondosRetenidos
         {
