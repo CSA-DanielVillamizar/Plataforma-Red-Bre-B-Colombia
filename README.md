@@ -69,6 +69,22 @@ La plataforma implementa un diseño orientado a microservicios reactivos y trans
 
 ---
 
+### 📅 Cronograma y Evaluación
+
+🎯 **[`docs/plan-y-evaluacion.md`](docs/plan-y-evaluacion.md)** — cronograma de clases hasta el 25 de noviembre, **fechas de los cinco eventos calificables** y las rúbricas de cada uno.
+
+| Evento | Fecha | Qué es | % |
+|---|---|---|---|
+| **E1** | mié 23-sep | Sustentación de la plataforma construida | 20 % |
+| **E2** | mié 30-sep | **Parcial** (individual) | 20 % |
+| **E3** | mié 21-oct | App MAUI consumiendo la API con JWT | 20 % |
+| **E4** | mié 11-nov | App en teléfono real, end-to-end | 20 % |
+| **E5** | mié 25-nov | **Sustentación final** | 20 % |
+
+> **E1 no pide trabajo nuevo:** califica lo que ya está en este repositorio — Issues con historias SDD, Pull Requests, y los análisis de squad en los comentarios. Revisa que tu contribución esté visible.
+
+---
+
 ### 🔀 Flujo de Trabajo (GitOps + SDD)
 
 Este repositorio sigue **Specification-Driven Development (SDD)**: la especificación (Historia de Usuario) se escribe y aprueba en un Issue *antes* de escribir código, y el código se valida contra esos criterios de aceptación.
@@ -237,6 +253,20 @@ The platform implements a reactive microservices design built for distributed tr
 * **Data, Tuning & Observability Squad:** Jalvi Villegas, Diego Valencia, Yulieth Urrego, Juan Sebastián Cardona + 6 additional members
 
 📋 **Full roster with GitHub handles:** [`docs/squads.md`](docs/squads.md) — 42 of 43 students confirmed. Use it to know who to assign as reviewer on your Pull Request.
+
+---
+
+### 📅 Schedule and Assessment
+
+🎯 **[`docs/plan-y-evaluacion.md`](docs/plan-y-evaluacion.md)** — class schedule through November 25, **dates for the five graded events**, and the rubric for each.
+
+| Event | Date | What it is | % |
+|---|---|---|---|
+| **E1** | Wed Sep 23 | Defense of the platform built so far | 20 % |
+| **E2** | Wed Sep 30 | **Midterm** (individual) | 20 % |
+| **E3** | Wed Oct 21 | MAUI app consuming the API with JWT | 20 % |
+| **E4** | Wed Nov 11 | App on a real phone, end-to-end | 20 % |
+| **E5** | Wed Nov 25 | **Final defense** | 20 % |
 
 ---
 
