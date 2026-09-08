@@ -56,7 +56,15 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host("localhost", "/", h =>
+        // ⚠️ Puerto 5673, no el 5672 por defecto.
+        // Si otro proyecto ya tiene tomado el 5672, Docker NO falla de forma
+        // visible: nuestro contenedor arranca, el healthcheck —que mira hacia
+        // adentro— reporta "healthy", pero sus puertos quedan SIN publicar y
+        // la app termina hablando con el broker del OTRO proyecto. El síntoma
+        // es un ACCESS_REFUSED desconcertante: las credenciales son correctas,
+        // solo que contra el broker equivocado.
+        // Se comprueba con:  docker port breb-rabbitmq   (vacío = no publicó)
+        cfg.Host("localhost", 5673, "/", h =>
         {
             h.Username("guest");
             h.Password("guest");
