@@ -6,8 +6,13 @@ services:
     image: masstransit/rabbitmq:latest
     container_name: breb-rabbitmq
     ports:
-      - "5672:5672"      # AMQP: por aquí viajan los mensajes
-      - "15672:15672"    # Panel web de administración
+      # 5673 en el HOST, no 5672. Otro proyecto puede tener tomado el puerto
+      # por defecto, y cuando eso pasa Docker NO falla de forma visible: el
+      # contenedor arranca, el healthcheck (que mira hacia adentro) dice
+      # "healthy", y la app termina hablando con el broker del OTRO proyecto.
+      # Mismo criterio que usamos con PostgreSQL en el 5433.
+      - "5673:5672"      # AMQP: por aquí viajan los mensajes
+      - "15673:15672"    # Panel web de administración
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
@@ -25,6 +30,15 @@ services:
   postgres:
     image: postgres:16
     container_name: breb-postgres
+    # Métricas y diagnóstico para la Clase 4 (tuning y deadlocks):
+    #  - pg_stat_statements: estadísticas por consulta
+    #  - log_lock_waits: escribe en el log cada espera por bloqueo
+    #  - deadlock_timeout: tras 1s esperando, busca si hay deadlock
+    command: >
+      postgres -c shared_preload_libraries=pg_stat_statements
+               -c pg_stat_statements.track=all
+               -c log_lock_waits=on
+               -c deadlock_timeout=1s
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: dev_only_password
