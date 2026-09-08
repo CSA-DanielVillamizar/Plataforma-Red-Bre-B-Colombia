@@ -199,7 +199,24 @@ await _db.SaveChangesAsync();
 | 12 líneas de comentario explicando por qué la guarda existe | borradas |
 | Rama duplicada que republicaba el evento a mano | simplificada |
 
-Alrededor de **20 líneas menos**, y el sistema quedó más correcto.
+**Contar líneas no captura el cambio, y conviene decirlo con el número exacto:**
+
+| | Semana 5 | Semana 6 |
+|---|---|---|
+| Líneas de código *(sin comentarios ni vacías)* | 58 | **55** |
+| Diff crudo | — | 33 insertadas, 45 borradas |
+
+**Tres líneas menos.** El archivo apenas se acortó, porque entró código nuevo: la búsqueda de la retención, su chequeo de nulo, y la variable `seLibero`.
+
+Lo que desapareció no son líneas: es un **mecanismo completo**.
+
+| Desapareció | Qué era |
+|---|---|
+| `claveIdempotencia` + consulta a `MensajesProcesados` | Una tabla, una consulta y una rama condicional |
+| La rama `if (yaCompensada)` con su `Publish` + `SaveChanges` duplicados | Código repetido para el caso duplicado |
+| `using Breb.Cuentas.Dominio` | El consumidor ya ni conoce `MensajeProcesado` |
+
+> **La idempotencia dejó de ser un mecanismo y pasó a ser una propiedad del modelo.** El archivo mide casi lo mismo y hace **una cosa menos**. Ese es el cambio, no el conteo de líneas.
 
 ---
 
