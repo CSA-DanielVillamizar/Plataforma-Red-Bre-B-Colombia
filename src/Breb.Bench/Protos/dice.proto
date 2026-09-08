@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option csharp_namespace = "Breb.Dice.Grpc";
+
+package dice;
+
+// DICE — el Directorio de la Red Bre-B.
+//
+// Resuelve una LLAVE (celular, correo, documento) a la cuenta bancaria
+// destino. Es la primera llamada de toda transferencia: si el usuario
+// escribe "3001234567", alguien tiene que decir a que banco y a que
+// cuenta corresponde.
+//
+// POR QUE ESTE SERVICIO ES EL CASO DE gRPC Y NO DE REST:
+//   - Es una llamada SINCRONA: la transferencia no puede seguir sin la
+//     respuesta. No sirve un evento asincrono aqui.
+//   - Es de ALTISIMO VOLUMEN: una consulta por cada transferencia del pais.
+//   - Es INTERNA: la consume nuestro backend, no un navegador ni un tercero.
+//   - El contrato es ESTABLE: resolver una llave cambia poco con los anos.
+//
+// Cuando las cuatro condiciones se dan juntas, gRPC gana. Cuando falta
+// alguna —sobre todo la tercera— REST suele ser la respuesta correcta.
+service Directorio {
+  // Resuelve una llave a su cuenta destino.
+  rpc Resolver (ResolverRequest) returns (ResolverResponse);
+
+  // Resuelve varias llaves en UNA sola llamada.
+  // Sobre HTTP/1.1 esto obligaria a N peticiones o a inventar un endpoint
+  // especial. Sobre HTTP/2 el multiplexado lo hace natural.
+  rpc ResolverLote (ResolverLoteRequest) returns (ResolverLoteResponse);
+}
+
+message ResolverRequest {
+  string llave = 1;
+}
+
+message ResolverResponse {
+  bool encontrada = 1;
+  string cuenta_id = 2;
+  string entidad = 3;       // codigo del banco o billetera
+  string tipo_llave = 4;    // CELULAR | CORREO | DOCUMENTO
+}
+
+message ResolverLoteRequest {
+  repeated string llaves = 1;
+}
+
+message ResolverLoteResponse {
+  repeated ResolverResponse resultados = 1;
+}
