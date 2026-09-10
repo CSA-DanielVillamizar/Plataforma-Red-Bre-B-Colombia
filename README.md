@@ -75,13 +75,13 @@ La plataforma implementa un diseño orientado a microservicios reactivos y trans
 
 | Evento | Fecha | Qué es | % |
 |---|---|---|---|
-| **E1** | mié 23-sep | Sustentación de la plataforma construida | 20 % |
+| **E1** | mié 23-sep | Recrear el entorno y sustentar un Issue | 20 % |
 | **E2** | mié 30-sep | **Parcial** (individual) | 20 % |
 | **E3** | mié 21-oct | App MAUI consumiendo la API con JWT | 20 % |
 | **E4** | mié 11-nov | App en teléfono real, end-to-end | 20 % |
 | **E5** | mié 25-nov | **Sustentación final** | 20 % |
 
-> **E1 no pide trabajo nuevo:** califica lo que ya está en este repositorio — Issues con historias SDD, Pull Requests, y los análisis de squad en los comentarios. Revisa que tu contribución esté visible.
+> **E1 cambió de formato.** Nunca se les pidió hacer commits ni Pull Requests durante las primeras seis semanas, así que calificar eso no sería justo. Ahora cada squad **clona el repositorio, recrea el entorno funcionando y sustenta un Issue** demostrando en vivo que está resuelto — con tres integrantes sustentando y el resto apoyando. Detalle completo en el [Issue #26](../../issues/26).
 
 ---
 
@@ -262,7 +262,7 @@ The platform implements a reactive microservices design built for distributed tr
 
 | Event | Date | What it is | % |
 |---|---|---|---|
-| **E1** | Wed Sep 23 | Defense of the platform built so far | 20 % |
+| **E1** | Wed Sep 23 | Recreate the environment and defend an Issue | 20 % |
 | **E2** | Wed Sep 30 | **Midterm** (individual) | 20 % |
 | **E3** | Wed Oct 21 | MAUI app consuming the API with JWT | 20 % |
 | **E4** | Wed Nov 11 | App on a real phone, end-to-end | 20 % |
