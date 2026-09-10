@@ -15,7 +15,6 @@ Responsables del Servicio de Orquestación de Pagos (MassTransit + Automatonymou
 | Sara Bermudez | [@SaraBermudez4](https://github.com/SaraBermudez4) |
 | Monica Puentes | [@monicapuentes-pd](https://github.com/monicapuentes-pd) |
 | Samuel Osorio | [@samuelosorio-dev](https://github.com/samuelosorio-dev) |
-| Estiben Montoya | [@EstibenMT](https://github.com/EstibenMT) |
 | Sergio Álvarez | [@sergioter23](https://github.com/sergioter23) |
 | Leonel Antonio Martinez Silgado | [@Leoces95](https://github.com/Leoces95) |
 | Juliana Arroyave Arango | [@Juli2609](https://github.com/Juli2609) |
@@ -44,13 +43,9 @@ Responsables del diseño de contratos (SDD), Event Storming, revisión arquitect
 
 | Nombre | GitHub |
 |---|---|
-| Juan Daniel Duque | [@DanielDuque2](https://github.com/DanielDuque2) |
-| Valentina Alvarez | [@ValenAlvarez16](https://github.com/ValenAlvarez16) |
 | Juan Carlos Herazo | [@DunKeL626](https://github.com/DunKeL626) |
-| Yenifer Gonzalez Quirama | [@YeniferGonzalezQ](https://github.com/YeniferGonzalezQ) |
 | Liliana Arias Rivera | [@Lili1823](https://github.com/Lili1823) |
 | Salome Ruiz Gallego | [@SalomeRG97](https://github.com/SalomeRG97) |
-| Luis Guillermo Gonzalez Ayala | [@memouk](https://github.com/memouk) |
 | David Stiven Diaz Duarte | [@EndyG34](https://github.com/EndyG34) |
 | Johan Sneider Garzon Salazar | [@JohanGarzon9905](https://github.com/JohanGarzon9905) |
 
@@ -60,7 +55,6 @@ Responsables de PostgreSQL, tuning de queries/bloqueos, OpenTelemetry y Serilog.
 
 | Nombre | GitHub |
 |---|---|
-| Jalvi Humberto Villegas Taborda | [@JVillegasT](https://github.com/JVillegasT) |
 | Diego Valencia | [@D13G04L3X](https://github.com/D13G04L3X) |
 | Yulieth Urrego | [@YuliethUrrego](https://github.com/YuliethUrrego) |
 | Juan Sebastian Cardona | *(usuario pendiente)* |
@@ -80,6 +74,15 @@ Responsables de PostgreSQL, tuning de queries/bloqueos, OpenTelemetry y Serilog.
 | Jean Carlos Gonzalez Goyeneche | [@JeanGonzalez10](https://github.com/JeanGonzalez10) |
 | Danny Mateo Hernández Sánchez | [@dannymateo](https://github.com/dannymateo) |
 
+## Squad 6
+| Nombre | GitHub |
+|---|---|
+| Yenifer Gonzalez Quirama | [@YeniferGonzalezQ](https://github.com/YeniferGonzalezQ) |
+| Juan Daniel Duque | [@DanielDuque2](https://github.com/DanielDuque2) |
+| Jalvi Humberto Villegas Taborda | [@JVillegasT](https://github.com/JVillegasT) |
+| Estiben Montoya | [@EstibenMT](https://github.com/EstibenMT) |
+| Valentina Alvarez | [@ValenAlvarez16](https://github.com/ValenAlvarez16) |
+| Luis Guillermo Gonzalez Ayala | [@memouk](https://github.com/memouk) |
 
 ---
 
