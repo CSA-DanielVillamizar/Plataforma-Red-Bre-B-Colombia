@@ -28,7 +28,6 @@ Responsables de Docker Compose, despliegues, observabilidad de infraestructura y
 | Nombre | GitHub |
 |---|---|
 | Jose Miguel Buritica | [@BuritiCrack](https://github.com/BuritiCrack) |
-| David Ramirez | [@davidramirez-beep](https://github.com/davidramirez-beep) |
 | Duban Guerra Castro | [@duguerrac](https://github.com/duguerrac) |
 | Edwin Ramirez Gonzalez | [@edwinramirezgon](https://github.com/edwinramirezgon) |
 | Jorge Elias Builes Chavarría | [@JorgeBuiles](https://github.com/JorgeBuiles) |
@@ -73,6 +72,7 @@ Responsables de PostgreSQL, tuning de queries/bloqueos, OpenTelemetry y Serilog.
 | Stefany Builes | [@Stefany023](https://github.com/Stefany023) |
 | Jean Carlos Gonzalez Goyeneche | [@JeanGonzalez10](https://github.com/JeanGonzalez10) |
 | Danny Mateo Hernández Sánchez | [@dannymateo](https://github.com/dannymateo) |
+| David Ramirez | [@davidramirez-beep](https://github.com/davidramirez-beep) |
 
 ## Squad 6
 | Nombre | GitHub |
