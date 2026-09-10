@@ -20,6 +20,9 @@ Responsables del Servicio de Orquestación de Pagos (MassTransit + Automatonymou
 | Juliana Arroyave Arango | [@Juli2609](https://github.com/Juli2609) |
 | Kevin Santiago Martinez Molina | [@Kevinmartinez07](https://github.com/Kevinmartinez07) |
 | Paula Andrea Calderón Quintero | [@Paucq](https://github.com/Paucq) |
+| Juan Manuel Valencia Giraldo | [@Juanchos2905](https://github.com/Juanchos2905) |
+| Juan Sebastian Cardona | [@jcardser](https://github.com/jcardser) |
+| Miguel Angel Giraldo Florez | [@miguel-Angel-G](https://github.com/miguel-Angel-G) |
 
 ## Squad DevOps, Infra y Cloud
 
@@ -56,12 +59,9 @@ Responsables de PostgreSQL, tuning de queries/bloqueos, OpenTelemetry y Serilog.
 |---|---|
 | Diego Valencia | [@D13G04L3X](https://github.com/D13G04L3X) |
 | Yulieth Urrego | [@YuliethUrrego](https://github.com/YuliethUrrego) |
-| Juan Sebastian Cardona | *(usuario pendiente)* |
 | Sara Melissa Marroquin Vega | [@saram05](https://github.com/saram05) |
 | Roison Garcia Sepulveda | [@RoisonGarcia](https://github.com/RoisonGarcia) |
 | Juan Esteban Quintero Acosta | [@Juanes-Quintero](https://github.com/Juanes-Quintero) |
-| Miguel Angel Giraldo Florez | [@miguel-Angel-G](https://github.com/miguel-Angel-G) |
-| Juan Manuel Valencia Giraldo | [@Juanchos2905](https://github.com/Juanchos2905) |
 | Juan David Alvarez Garcia | [@Juan-AG](https://github.com/Juan-AG) |
 
 ## Squad 5
