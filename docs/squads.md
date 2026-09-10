@@ -24,6 +24,7 @@ Responsables del Servicio de Orquestación de Pagos (MassTransit + Automatonymou
 | Paula Andrea Calderón Quintero | [@Paucq](https://github.com/Paucq) |
 | Juan Manuel Valencia Giraldo | [@Juanchos2905](https://github.com/Juanchos2905) |
 | Juan Sebastian Cardona | [@jcardser](https://github.com/jcardser) |
+| Miguel Angel Giraldo Florez | [@miguel-Angel-G](https://github.com/miguel-Angel-G) |
 
 ## Squad DevOps, Infra y Cloud
 
@@ -72,7 +73,6 @@ Responsables de PostgreSQL, tuning de queries/bloqueos, OpenTelemetry y Serilog.
 | Roison Garcia Sepulveda | [@RoisonGarcia](https://github.com/RoisonGarcia) |
 | Danny Mateo Hernández Sánchez | [@dannymateo](https://github.com/dannymateo) |
 | Juan Esteban Quintero Acosta | [@Juanes-Quintero](https://github.com/Juanes-Quintero) |
-| Miguel Angel Giraldo Florez | [@miguel-Angel-G](https://github.com/miguel-Angel-G) |
 | Juan David Alvarez Garcia | [@Juan-AG](https://github.com/Juan-AG) |
 
 ---
