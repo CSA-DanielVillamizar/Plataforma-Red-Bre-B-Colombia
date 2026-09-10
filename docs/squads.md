@@ -15,10 +15,8 @@ Responsables del Servicio de Orquestación de Pagos (MassTransit + Automatonymou
 | Sara Bermudez | [@SaraBermudez4](https://github.com/SaraBermudez4) |
 | Monica Puentes | [@monicapuentes-pd](https://github.com/monicapuentes-pd) |
 | Samuel Osorio | [@samuelosorio-dev](https://github.com/samuelosorio-dev) |
-| Estiben Montoya | [@EstibenMT](https://github.com/EstibenMT) |
 | Sergio Álvarez | [@sergioter23](https://github.com/sergioter23) |
 | Leonel Antonio Martinez Silgado | [@Leoces95](https://github.com/Leoces95) |
-| Jean Carlos Gonzalez Goyeneche | [@JeanGonzalez10](https://github.com/JeanGonzalez10) |
 | Juliana Arroyave Arango | [@Juli2609](https://github.com/Juli2609) |
 | Kevin Santiago Martinez Molina | [@Kevinmartinez07](https://github.com/Kevinmartinez07) |
 | Paula Andrea Calderón Quintero | [@Paucq](https://github.com/Paucq) |
