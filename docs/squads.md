@@ -18,7 +18,6 @@ Responsables del Servicio de Orquestación de Pagos (MassTransit + Automatonymou
 | Estiben Montoya | [@EstibenMT](https://github.com/EstibenMT) |
 | Sergio Álvarez | [@sergioter23](https://github.com/sergioter23) |
 | Leonel Antonio Martinez Silgado | [@Leoces95](https://github.com/Leoces95) |
-| Jean Carlos Gonzalez Goyeneche | [@JeanGonzalez10](https://github.com/JeanGonzalez10) |
 | Juliana Arroyave Arango | [@Juli2609](https://github.com/Juli2609) |
 | Kevin Santiago Martinez Molina | [@Kevinmartinez07](https://github.com/Kevinmartinez07) |
 | Paula Andrea Calderón Quintero | [@Paucq](https://github.com/Paucq) |
@@ -29,7 +28,6 @@ Responsables de Docker Compose, despliegues, observabilidad de infraestructura y
 
 | Nombre | GitHub |
 |---|---|
-| Stefany Builes | [@Stefany023](https://github.com/Stefany023) |
 | Jose Miguel Buritica | [@BuritiCrack](https://github.com/BuritiCrack) |
 | David Ramirez | [@davidramirez-beep](https://github.com/davidramirez-beep) |
 | Duban Guerra Castro | [@duguerrac](https://github.com/duguerrac) |
@@ -47,7 +45,6 @@ Responsables del diseño de contratos (SDD), Event Storming, revisión arquitect
 | Nombre | GitHub |
 |---|---|
 | Juan Daniel Duque | [@DanielDuque2](https://github.com/DanielDuque2) |
-| Leidy Mora | [@daihanamora](https://github.com/daihanamora) |
 | Valentina Alvarez | [@ValenAlvarez16](https://github.com/ValenAlvarez16) |
 | Juan Carlos Herazo | [@DunKeL626](https://github.com/DunKeL626) |
 | Yenifer Gonzalez Quirama | [@YeniferGonzalezQ](https://github.com/YeniferGonzalezQ) |
@@ -69,11 +66,20 @@ Responsables de PostgreSQL, tuning de queries/bloqueos, OpenTelemetry y Serilog.
 | Juan Sebastian Cardona | *(usuario pendiente)* |
 | Sara Melissa Marroquin Vega | [@saram05](https://github.com/saram05) |
 | Roison Garcia Sepulveda | [@RoisonGarcia](https://github.com/RoisonGarcia) |
-| Danny Mateo Hernández Sánchez | [@dannymateo](https://github.com/dannymateo) |
 | Juan Esteban Quintero Acosta | [@Juanes-Quintero](https://github.com/Juanes-Quintero) |
 | Miguel Angel Giraldo Florez | [@miguel-Angel-G](https://github.com/miguel-Angel-G) |
 | Juan Manuel Valencia Giraldo | [@Juanchos2905](https://github.com/Juanchos2905) |
 | Juan David Alvarez Garcia | [@Juan-AG](https://github.com/Juan-AG) |
+
+## Squad 5
+
+| Nombre | GitHub |
+|---|---|
+| Leidy Mora | [@daihanamora](https://github.com/daihanamora) |
+| Stefany Builes | [@Stefany023](https://github.com/Stefany023) |
+| Jean Carlos Gonzalez Goyeneche | [@JeanGonzalez10](https://github.com/JeanGonzalez10) |
+| Danny Mateo Hernández Sánchez | [@dannymateo](https://github.com/dannymateo) |
+
 
 ---
 
