@@ -45,7 +45,6 @@ Responsables del diseño de contratos (SDD), Event Storming, revisión arquitect
 | Nombre | GitHub |
 |---|---|
 | Juan Daniel Duque | [@DanielDuque2](https://github.com/DanielDuque2) |
-
 | Valentina Alvarez | [@ValenAlvarez16](https://github.com/ValenAlvarez16) |
 | Juan Carlos Herazo | [@DunKeL626](https://github.com/DunKeL626) |
 | Yenifer Gonzalez Quirama | [@YeniferGonzalezQ](https://github.com/YeniferGonzalezQ) |
@@ -72,7 +71,6 @@ Responsables de PostgreSQL, tuning de queries/bloqueos, OpenTelemetry y Serilog.
 | Juan Manuel Valencia Giraldo | [@Juanchos2905](https://github.com/Juanchos2905) |
 | Juan David Alvarez Garcia | [@Juan-AG](https://github.com/Juan-AG) |
 
-
 ## Squad 5
 
 | Nombre | GitHub |
@@ -81,6 +79,7 @@ Responsables de PostgreSQL, tuning de queries/bloqueos, OpenTelemetry y Serilog.
 | Stefany Builes | [@Stefany023](https://github.com/Stefany023) |
 | Jean Carlos Gonzalez Goyeneche | [@JeanGonzalez10](https://github.com/JeanGonzalez10) |
 | Danny Mateo Hernández Sánchez | [@dannymateo](https://github.com/dannymateo) |
+
 
 ---
 
