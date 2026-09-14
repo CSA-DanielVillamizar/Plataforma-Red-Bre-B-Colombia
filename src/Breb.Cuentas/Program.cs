@@ -1,9 +1,10 @@
-using MassTransit;
+﻿using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Breb.Cuentas.Infraestructura;
 using Breb.Cuentas.Consumidores;
 using Breb.Cuentas.Contratos;
 using Breb.Cuentas.Sagas;
+using Breb.Cuentas.Seguridad;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -113,10 +114,40 @@ builder.Services.AddMassTransit(x =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// ── Seguridad (Semana 8) ────────────────────────────────────────────────
+builder.Services.AgregarAutenticacionJwt();
+
 var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// ⚠️ EL ORDEN IMPORTA Y ES UNA FUENTE CLÁSICA DE ERRORES.
+// UseAuthentication va SIEMPRE antes que UseAuthorization:
+//   autenticación = ¿quién eres?   (lee y valida el token)
+//   autorización  = ¿puedes hacer esto?  (mira el resultado de lo anterior)
+// Al revés, la autorización se ejecuta sin saber quién es nadie, y todo
+// endpoint protegido devuelve 401 aunque el token sea perfecto.
+app.UseAuthentication();
+app.UseAuthorization();
+
+// ── Emisión de tokens ───────────────────────────────────────────────────
+// En producción esto vive en un servicio de identidad aparte, no dentro de
+// la API que protege. Aquí está junto para que la clase quepa en una sesión.
+//
+// Y sí: acepta cualquier usuario sin verificar contraseña. Es deliberado —
+// hoy el tema es qué hace el TOKEN, no cómo se verifica una credencial.
+app.MapPost("/token", (string usuario, string? rol) =>
+{
+    var (token, expira) = Autenticacion.EmitirToken(usuario, rol ?? "operador");
+    return Results.Ok(new
+    {
+        token,
+        expira,
+        tipo = "Bearer",
+        duracionMinutos = Autenticacion.Duracion.TotalMinutes
+    });
+});
 
 app.MapPost("/cuentas/{cuentaId:guid}/retener",
     async (Guid cuentaId, decimal montoUVB,
@@ -182,7 +213,8 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
                         transferenciaId, montoUVB);
 
         return Results.Ok(new { transferenciaId, montoUVB });
-    });
+    })
+    .RequireAuthorization();
 
 // Simula la confirmación del core bancario destino.
 // En producción este evento llegaría del banco receptor, no de un endpoint.
@@ -203,6 +235,23 @@ app.MapPost("/transferencias/{transferenciaId:guid}/confirmar-abono",
 
         Log.Information("Abono confirmado para {TransferenciaId}", transferenciaId);
         return Results.Accepted();
+    })
+    .RequireAuthorization();
+
+// ── Endpoint de diagnóstico: qué dice MI token (Semana 8) ───────────────
+// Devuelve las afirmaciones del token con el que se llamó. Sirve para dos
+// cosas en clase: ver qué viaja realmente dentro, y comprobar que el
+// servidor lee lo mismo que uno decodificó a mano.
+app.MapGet("/quien-soy", (HttpContext ctx) =>
+{
+    var afirmaciones = ctx.User.Claims.ToDictionary(c => c.Type, c => c.Value);
+    return Results.Ok(new
+    {
+        autenticado = ctx.User.Identity?.IsAuthenticated ?? false,
+        nombre = ctx.User.Identity?.Name,
+        afirmaciones
     });
+})
+.RequireAuthorization();
 
 app.Run();
