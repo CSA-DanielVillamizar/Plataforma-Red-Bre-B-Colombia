@@ -49,7 +49,6 @@ Responsables del diseño de contratos (SDD), Event Storming, revisión arquitect
 | Liliana Arias Rivera | [@Lili1823](https://github.com/Lili1823) |
 | Salome Ruiz Gallego | [@SalomeRG97](https://github.com/SalomeRG97) |
 | David Stiven Diaz Duarte | [@EndyG34](https://github.com/EndyG34) |
-| Johan Sneider Garzon Salazar | [@JohanGarzon9905](https://github.com/JohanGarzon9905) |
 
 ## Squad Datos, Tuning y Observabilidad
 
@@ -63,6 +62,7 @@ Responsables de PostgreSQL, tuning de queries/bloqueos, OpenTelemetry y Serilog.
 | Roison Garcia Sepulveda | [@RoisonGarcia](https://github.com/RoisonGarcia) |
 | Juan Esteban Quintero Acosta | [@Juanes-Quintero](https://github.com/Juanes-Quintero) |
 | Juan David Alvarez Garcia | [@Juan-AG](https://github.com/Juan-AG) |
+| Johan Sneider Garzon Salazar | [@JohanGarzon9905](https://github.com/JohanGarzon9905) |
 
 ## Squad 5
 
