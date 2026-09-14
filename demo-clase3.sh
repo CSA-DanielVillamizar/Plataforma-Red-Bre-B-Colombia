@@ -19,8 +19,11 @@ V='\033[1;32m'; R='\033[1;31m'; A='\033[1;33m'; C='\033[1;36m'; N='\033[0m'; B='
 
 linea() { echo -e "${C}════════════════════════════════════════════════════════════${N}"; }
 
+# Filtra por la cuenta de la demo: desde la Clase 4 hay más cuentas (2222...
+# para el deadlock y las aaaa... de la carga de la Clase 5), y sin el WHERE
+# saldría un saldo por cada una.
 saldo() {
-    $PG -t -c "SELECT '   Disponible: ' || \"SaldoDisponible\" || '   |   Retenido: ' || \"SaldoRetenido\" FROM \"Cuentas\";" 2>/dev/null | grep -v '^$'
+    $PG -t -c "SELECT '   Disponible: ' || \"SaldoDisponible\" || '   |   Retenido: ' || \"SaldoRetenido\" FROM \"Cuentas\" WHERE \"Id\"='$CUENTA';" 2>/dev/null | grep -v '^$'
 }
 
 sagas() {
@@ -30,7 +33,7 @@ sagas() {
 }
 
 reset_saldo() {
-    $PG -c "UPDATE \"Cuentas\" SET \"SaldoDisponible\"=5000, \"SaldoRetenido\"=0; DELETE FROM \"MensajesProcesados\"; DELETE FROM \"TransferenciaSagas\";" >/dev/null 2>&1
+    $PG -c "UPDATE \"Cuentas\" SET \"SaldoDisponible\"=5000, \"SaldoRetenido\"=0 WHERE \"Id\"='$CUENTA'; DELETE FROM \"MensajesProcesados\"; DELETE FROM \"TransferenciaSagas\";" >/dev/null 2>&1
 }
 
 # Verifica que la infraestructura Y la aplicación estén arriba.
@@ -54,7 +57,7 @@ preflight() {
     if [ "$code" != "200" ]; then
         echo -e "\n${R}✗ La aplicación NO está corriendo en $API${N}"
         echo -e "  Arráncala en otra terminal:"
-        echo -e "     ${B}cd Breb.Platform/Breb.Cuentas${N}"
+        echo -e "     ${B}cd src/Breb.Cuentas${N}"
         echo -e "     ${B}dotnet run --urls http://localhost:5080${N}"
         echo -e "  Espera a ver: ${B}Bus started: rabbitmq://localhost/${N}"
         fallo=1
@@ -62,6 +65,18 @@ preflight() {
 
     if [ "$fallo" = "1" ]; then
         echo -e "\n${A}La demo no puede continuar hasta resolver lo anterior.${N}\n"
+        exit 1
+    fi
+}
+
+# Desde la Semana 8 la API exige un JWT en /retener y /confirmar-abono.
+# Se pide UNA vez y se reusa: validar un token es barato, emitirlo no.
+token() {
+    local r=$(curl -s -X POST --max-time 10 "$API/token?usuario=demo-clase3&rol=operador")
+    TOKEN=$(echo "$r" | python -c "import sys,json;print(json.load(sys.stdin)['token'])" 2>/dev/null)
+    if [ -z "$TOKEN" ]; then
+        echo -e "\n${R}✗ No se pudo obtener un token de $API/token${N}"
+        echo -e "  ¿Corre la versión de la Semana 8 o posterior?\n"
         exit 1
     fi
 }
@@ -78,7 +93,8 @@ feliz)
     echo -e "\n${B}1. Saldo inicial:${N}"; saldo
 
     echo -e "\n${B}2. El usuario inicia una transferencia de 100 UVB...${N}"
-    RESP=$(curl -s -X POST "$API/cuentas/$CUENTA/retener?montoUVB=100")
+    token
+    RESP=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" "$API/cuentas/$CUENTA/retener?montoUVB=100")
     TID=$(echo "$RESP" | python -c "import sys,json;print(json.load(sys.stdin)['transferenciaId'])" 2>/dev/null)
 
     if [ -z "$TID" ]; then
@@ -94,7 +110,7 @@ feliz)
     echo -e "   ${C}  El dinero está EN TRÁNSITO: ni en origen ni en destino.${N}"
 
     echo -e "\n${B}4. El banco destino confirma el abono (dentro de los 15s)...${N}"
-    curl -s -X POST "$API/transferencias/$TID/confirmar-abono" -o /dev/null -w "   Respuesta: HTTP %{http_code}\n"
+    curl -s -X POST -H "Authorization: Bearer $TOKEN" "$API/transferencias/$TID/confirmar-abono" -o /dev/null -w "   Respuesta: HTTP %{http_code}\n"
 
     echo -e "\n   Esperando cierre de la saga..."
     sleep 6
@@ -115,7 +131,8 @@ compensar)
     echo -e "\n${B}1. Saldo inicial:${N}"; saldo
 
     echo -e "\n${B}2. El usuario inicia una transferencia de 100 UVB...${N}"
-    RESP=$(curl -s -X POST "$API/cuentas/$CUENTA/retener?montoUVB=100")
+    token
+    RESP=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" "$API/cuentas/$CUENTA/retener?montoUVB=100")
     TID=$(echo "$RESP" | python -c "import sys,json;print(json.load(sys.stdin)['transferenciaId'])" 2>/dev/null)
 
     if [ -z "$TID" ]; then

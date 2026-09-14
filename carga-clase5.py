@@ -19,6 +19,7 @@ Ejemplos:
 Requisito: las cuentas de prueba deben existir. Ver Clase5_Instructivo_Tecnico.md.
 """
 import asyncio
+import re
 import sys
 import time
 
@@ -50,14 +51,52 @@ def cuenta(i):
     return 'aaaaaaaa-0000-0000-0000-%012d' % ((i % NCTAS) + 1)
 
 
+# ── Autenticacion (Semana 8) ─────────────────────────────────────────────
+# Desde la Semana 8 el endpoint /retener exige un JWT. Este generador pide
+# un token UNA VEZ y lo reusa en todas las peticiones.
+#
+# POR QUE UNA SOLA VEZ Y NO UNO POR PETICION:
+# validar un JWT es aritmetica local —verificar una firma HMAC— y no cuesta
+# casi nada. EMITIRLO si cuesta, porque en un sistema real implica verificar
+# credenciales contra una base. Un cliente que pide un token nuevo en cada
+# llamada convierte el servicio de identidad en el cuello de botella de todo
+# el sistema.
+TOKEN = None
+
+
+async def obtener_token():
+    """Pide un token al endpoint /token y lo guarda para toda la corrida."""
+    global TOKEN
+    puerto = PUERTOS[0]
+    pedido = (
+        'POST /token?usuario=generador-de-carga&rol=operador HTTP/1.1\r\n'
+        'Host: localhost:%s\r\n'
+        'Content-Length: 0\r\n'
+        'Connection: close\r\n\r\n' % puerto
+    ).encode()
+    r, w = await asyncio.open_connection('127.0.0.1', int(puerto))
+    w.write(pedido)
+    await w.drain()
+    cuerpo = await r.read()
+    w.close()
+    texto = cuerpo.decode('utf-8', 'ignore')
+    m = re.search(r'"token"\s*:\s*"([^"]+)"', texto)
+    if not m:
+        print("\n[X] No se pudo obtener el token de /token")
+        print("    ¿Esta corriendo la version de la Semana 8 o posterior?\n")
+        sys.exit(1)
+    TOKEN = m.group(1)
+
+
 async def una(i, lat, errs):
     puerto = PUERTOS[i % len(PUERTOS)]
     ruta = '/cuentas/%s/retener?montoUVB=1' % cuenta(i)
     pedido = (
         'POST %s HTTP/1.1\r\n'
         'Host: localhost:%s\r\n'
+        'Authorization: Bearer %s\r\n'
         'Content-Length: 0\r\n'
-        'Connection: close\r\n\r\n' % (ruta, puerto)
+        'Connection: close\r\n\r\n' % (ruta, puerto, TOKEN)
     ).encode()
     t0 = time.perf_counter()
     try:
@@ -95,6 +134,7 @@ async def preflight():
 
 async def main():
     await preflight()
+    await obtener_token()
 
     lat, errs = [], []
     sem = asyncio.Semaphore(CONC)
