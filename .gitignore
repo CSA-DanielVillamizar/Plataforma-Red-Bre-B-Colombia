@@ -63,3 +63,6 @@ desktop.ini
 *.bak
 TestResults/
 coverage/
+
+# Salida de rotacion-clase9.py
+rotacion-clase9.log
