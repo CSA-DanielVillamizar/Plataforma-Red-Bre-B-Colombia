@@ -115,7 +115,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // ── Seguridad (Semana 8) ────────────────────────────────────────────────
-builder.Services.AgregarAutenticacionJwt();
+// Recibe el builder completo, no solo los servicios: necesita la
+// CONFIGURACIÓN (de ahí sale la clave) y el AMBIENTE (para negarse a usar la
+// clave de desarrollo en producción).
+builder.AgregarAutenticacionJwt();
 
 var app = builder.Build();
 
@@ -135,17 +138,26 @@ app.UseAuthorization();
 // En producción esto vive en un servicio de identidad aparte, no dentro de
 // la API que protege. Aquí está junto para que la clase quepa en una sesión.
 //
-// Y sí: acepta cualquier usuario sin verificar contraseña. Es deliberado —
-// hoy el tema es qué hace el TOKEN, no cómo se verifica una credencial.
-app.MapPost("/token", (string usuario, string? rol) =>
+// Semana 8, primera sesión: aceptaba cualquier usuario Y EL ROL QUE PIDIERA
+// EL CLIENTE (?rol=operador). La actividad lo destapó (caso A10).
+// Ahora: usuario y contraseña en el CUERPO —nunca en la URL, que queda en
+// los registros de cada proxy— y el rol lo decide el directorio.
+app.MapPost("/token", (SolicitudToken solicitud, DirectorioUsuarios directorio, EmisorTokens emisor) =>
 {
-    var (token, expira) = Autenticacion.EmitirToken(usuario, rol ?? "operador");
+    var rol = directorio.Verificar(solicitud.Usuario, solicitud.Clave);
+
+    // Misma respuesta para "no existe" y "contraseña equivocada": decir cuál
+    // de las dos falló le regala a un atacante la lista de usuarios válidos.
+    if (rol is null) return Results.Unauthorized();
+
+    var (token, expira) = emisor.Emitir(solicitud.Usuario!, rol);   // Verificar ya descartó el null
     return Results.Ok(new
     {
         token,
         expira,
         tipo = "Bearer",
-        duracionMinutos = Autenticacion.Duracion.TotalMinutes
+        rol,
+        duracionMinutos = EmisorTokens.Duracion.TotalMinutes
     });
 });
 
@@ -214,7 +226,10 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
 
         return Results.Ok(new { transferenciaId, montoUVB });
     })
-    .RequireAuthorization();
+    // Semana 8, primera sesión: .RequireAuthorization() — CUALQUIER token válido.
+    // Un usuario de consulta retenía fondos. Ahora hace falta el rol operador;
+    // con otro rol la respuesta es 403, no 401: sabemos quién es, y no puede.
+    .RequireAuthorization(Politicas.Operador);
 
 // Simula la confirmación del core bancario destino.
 // En producción este evento llegaría del banco receptor, no de un endpoint.
@@ -236,7 +251,11 @@ app.MapPost("/transferencias/{transferenciaId:guid}/confirmar-abono",
         Log.Information("Abono confirmado para {TransferenciaId}", transferenciaId);
         return Results.Accepted();
     })
-    .RequireAuthorization();
+    // Confirmar un abono lo dice el BANCO DESTINO, no un operador humano.
+    // Es una identidad de servicio (core-bancario) con rol "banco". Un operador
+    // que pudiera confirmar abonos podría completar transferencias que el banco
+    // destino nunca recibió.
+    .RequireAuthorization(Politicas.BancoDestino);
 
 // ── Endpoint de diagnóstico: qué dice MI token (Semana 8) ───────────────
 // Devuelve las afirmaciones del token con el que se llamó. Sirve para dos
@@ -254,4 +273,18 @@ app.MapGet("/quien-soy", (HttpContext ctx) =>
 })
 .RequireAuthorization();
 
+// ── Consulta de saldo (Semana 8, segunda sesión) ────────────────────────
+// La razón de existir del rol "consulta": puede LEER, no MOVER.
+app.MapGet("/cuentas/{cuentaId:guid}/saldo", async (Guid cuentaId, CuentasDbContext db) =>
+{
+    var cuenta = await db.Cuentas.AsNoTracking().FirstOrDefaultAsync(c => c.Id == cuentaId);
+    return cuenta is null
+        ? Results.NotFound()
+        : Results.Ok(new { cuentaId, cuenta.SaldoDisponible, cuenta.SaldoRetenido });
+})
+.RequireAuthorization(Politicas.LecturaCuentas);
+
 app.Run();
+
+/// <summary>Credenciales para /token. Viajan en el cuerpo, nunca en la URL.</summary>
+public record SolicitudToken(string? Usuario, string? Clave);

@@ -23,9 +23,22 @@ PUERTO = sys.argv[1] if len(sys.argv) > 1 else "5080"
 API = "http://localhost:%s" % PUERTO
 CUENTA = "11111111-1111-1111-1111-111111111111"
 
-# La MISMA clave que esta en Seguridad/Autenticacion.cs. Tenerla aqui es
-# justamente la leccion de la prueba 5: quien tiene la clave, fabrica tokens.
-CLAVE = b"clave-de-laboratorio-no-usar-en-produccion-32+"
+# La clave de firma de DESARROLLO. Desde la segunda sesion de la Semana 8 ya
+# no esta en el codigo: esta en appsettings.Development.json. Este script la
+# LEE DE AHI, del repositorio — que es justamente la leccion de la prueba 5:
+# quien tiene la clave, fabrica tokens.
+import os
+CLAVE = None
+for ruta in ("Breb.Platform/Breb.Cuentas/appsettings.Development.json",
+             "src/Breb.Cuentas/appsettings.Development.json"):
+    ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), ruta)
+    if os.path.exists(ruta):
+        with open(ruta, encoding="utf-8-sig") as f:
+            CLAVE = json.load(f)["Jwt"]["ClaveFirma"].encode()
+        break
+if CLAVE is None:
+    print("[X] No se encontro appsettings.Development.json con Jwt:ClaveFirma")
+    sys.exit(1)
 
 
 def b64url_decodificar(s):
@@ -66,7 +79,14 @@ print("  PRUEBAS DE SEGURIDAD JWT contra %s" % API)
 print("=" * 78)
 
 # ── Conseguir un token legitimo ──────────────────────────────────────────
-codigo, texto = pedir("POST", "/token?usuario=ana.gomez&rol=operador")
+req = urllib.request.Request(API + "/token", method="POST",
+                             data=b'{"usuario":"ana.operadora","clave":"Operadora-2026"}',
+                             headers={"Content-Type": "application/json"})
+try:
+    with urllib.request.urlopen(req, timeout=10) as r:
+        codigo, texto = r.status, r.read().decode()
+except urllib.error.HTTPError as e:
+    codigo, texto = e.code, e.read().decode()
 if codigo != 200:
     print("\n[X] /token respondio %d. ¿Corre la version de la Semana 8?\n" % codigo)
     sys.exit(1)
@@ -110,7 +130,9 @@ resultados.append(fila(4, "Firmado con otra clave", 401, c))
 # 5. Firmado con LA clave correcta: el atacante tiene el secreto
 ahora = int(time.time())
 fabricado = dict(cuerpo, sub="atacante", exp=ahora + 600)
-fabricado[rol_clave] = "administrador"
+# Con la clave, el atacante se pone el rol que la ruta exige. Desde que
+# /retener pide "operador", eso es lo que se pone.
+fabricado[rol_clave] = "operador"
 token_fabricado = firmar({"alg": "HS256", "typ": "JWT"}, fabricado, CLAVE)
 c, _ = pedir("POST", "/cuentas/%s/retener?montoUVB=1" % CUENTA, token_fabricado)
 resultados.append(fila(5, "FABRICADO con la clave robada", 200, c))
@@ -140,6 +162,7 @@ print("    %s" % texto)
 
 print("\n  %d de %d respondieron lo esperado." % (sum(resultados), len(resultados)))
 print("\n  La prueba 5 NO es un fallo del JWT: es lo que pasa cuando la clave")
-print("  se filtra. La clave esta en el codigo de este repositorio. Por eso,")
-print("  en produccion, va en un gestor de secretos y nunca en git.")
+print("  se filtra. La clave de DESARROLLO esta en appsettings.Development.json,")
+print("  en este repositorio, a proposito. Fuera de Development la app se niega")
+print("  a arrancar con ella: la real llega por variable de entorno o gestor de secretos.")
 print("=" * 78)

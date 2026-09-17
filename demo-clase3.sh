@@ -69,16 +69,24 @@ preflight() {
     fi
 }
 
-# Desde la Semana 8 la API exige un JWT en /retener y /confirmar-abono.
-# Se pide UNA vez y se reusa: validar un token es barato, emitirlo no.
-token() {
-    local r=$(curl -s -X POST --max-time 10 "$API/token?usuario=demo-clase3&rol=operador")
-    TOKEN=$(echo "$r" | python -c "import sys,json;print(json.load(sys.stdin)['token'])" 2>/dev/null)
-    if [ -z "$TOKEN" ]; then
-        echo -e "\n${R}✗ No se pudo obtener un token de $API/token${N}"
-        echo -e "  ¿Corre la versión de la Semana 8 o posterior?\n"
+# Desde la Semana 8 la API exige un JWT, y cada operación pide su ROL:
+#   /retener          → ana.operadora  (rol operador)
+#   /confirmar-abono  → core-bancario  (rol banco: lo confirma el banco destino)
+# Usuarios de LABORATORIO, documentados: no son secretos.
+pedir_token() {
+    local r=$(curl -s -X POST --max-time 10 -H "Content-Type: application/json" \
+              -d "{\"usuario\":\"$1\",\"clave\":\"$2\"}" "$API/token")
+    T=$(echo "$r" | python -c "import sys,json;print(json.load(sys.stdin)['token'])" 2>/dev/null)
+    if [ -z "$T" ]; then
+        echo -e "\n${R}✗ No se pudo obtener un token para $1 en $API/token${N}"
+        echo -e "  ¿Corre la versión de la Semana 8 (segunda sesión) o posterior?\n"
         exit 1
     fi
+}
+
+token() {
+    pedir_token "ana.operadora" "Operadora-2026";    TOKEN=$T
+    pedir_token "core-bancario" "CoreBancario-2026"; TOKEN_BANCO=$T
 }
 
 case "${1:-}" in
@@ -104,13 +112,26 @@ feliz)
     fi
     echo -e "   Transferencia: ${A}$TID${N}"
 
-    sleep 3
+    # La confirmación se PROGRAMA ya, a los 5 s de retener, en segundo plano.
+    # Antes se enviaba después de consultar el saldo, y cada 'docker exec'
+    # tarda 1-1.6 s (medido); con Docker lento, la confirmación llegaba pasados
+    # los 15 s y la saga compensaba en pleno "camino feliz".
+    T0=$(date +%s)
+    CONF=$(mktemp)
+    ( sleep 5
+      code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+             -H "Authorization: Bearer $TOKEN_BANCO" "$API/transferencias/$TID/confirmar-abono")
+      echo "$code $(( $(date +%s) - T0 ))" > "$CONF" ) &
+
+    sleep 2
     echo -e "\n${B}3. Saldo tras retener — ${A}se retuvieron 100 UVB${N}${B}:${N}"; saldo; sagas
     echo -e "   ${C}↑ 100 UVB salieron de Disponible y pasaron a Retenido.${N}"
     echo -e "   ${C}  El dinero está EN TRÁNSITO: ni en origen ni en destino.${N}"
 
     echo -e "\n${B}4. El banco destino confirma el abono (dentro de los 15s)...${N}"
-    curl -s -X POST -H "Authorization: Bearer $TOKEN" "$API/transferencias/$TID/confirmar-abono" -o /dev/null -w "   Respuesta: HTTP %{http_code}\n"
+    wait
+    read CODIGO SEG < "$CONF"; rm -f "$CONF"
+    echo -e "   Respuesta: HTTP $CODIGO — enviada a los ${SEG} s de retener (límite: 15 s)"
 
     echo -e "\n   Esperando cierre de la saga..."
     sleep 6

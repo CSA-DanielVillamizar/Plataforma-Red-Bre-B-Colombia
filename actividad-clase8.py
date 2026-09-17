@@ -8,6 +8,12 @@ ACTIVIDAD CLASE 8 - mediciones que respaldan las respuestas de los squads.
   Arquitectura -> los casos de prueba 401/403, contra la API tal como esta HOY
 
 Solo biblioteca estandar. Uso:  python actividad-clase8.py [puerto]
+
+OJO: mide la API tal como quedo en la PRIMERA sesion de la Semana 8, cuando
+/token aceptaba ?usuario=&rol= por la URL. Desde la segunda sesion /token
+pide usuario y contrasena en el cuerpo, y este script ya no obtiene tokens.
+Sus resultados quedan como registro historico. La version actual de la
+matriz es  pruebas-autorizacion-clase9.py.
 """
 import base64
 import hashlib

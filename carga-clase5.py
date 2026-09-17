@@ -68,12 +68,16 @@ async def obtener_token():
     """Pide un token al endpoint /token y lo guarda para toda la corrida."""
     global TOKEN
     puerto = PUERTOS[0]
+    # Semana 8, segunda sesion: credenciales en el CUERPO y rol decidido por
+    # el servidor. Usuario de laboratorio, documentado: no es un secreto.
+    cuerpo_json = b'{"usuario":"ana.operadora","clave":"Operadora-2026"}'
     pedido = (
-        'POST /token?usuario=generador-de-carga&rol=operador HTTP/1.1\r\n'
+        'POST /token HTTP/1.1\r\n'
         'Host: localhost:%s\r\n'
-        'Content-Length: 0\r\n'
-        'Connection: close\r\n\r\n' % puerto
-    ).encode()
+        'Content-Type: application/json\r\n'
+        'Content-Length: %d\r\n'
+        'Connection: close\r\n\r\n' % (puerto, len(cuerpo_json))
+    ).encode() + cuerpo_json
     r, w = await asyncio.open_connection('127.0.0.1', int(puerto))
     w.write(pedido)
     await w.drain()
