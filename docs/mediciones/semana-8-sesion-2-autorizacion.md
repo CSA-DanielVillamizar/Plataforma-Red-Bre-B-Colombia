@@ -114,4 +114,4 @@ python ataque-broker-clase9.py
 
 Tras las 900 transferencias de carga: 0 sagas vivas, **1 R-FAULT** (`40001` en `FondosRetenidos`) y **1 retención huérfana** de 1 UVB en la cuenta `aaaaaaaa-…-000000000012`. El evento que crea la saga agotó sus 10 reintentos; la saga nunca nació y nadie va a compensar ese dinero.
 
-No lo causa la autorización (no toca la mensajería). **No se sabe si ya ocurría:** en la carga de la primera sesión no se revisaron huérfanas. Se detecta con la consulta de reconciliación de la Semana 6.
+No lo causa la autorización (no toca la mensajería). **Y no es nuevo:** la Semana 6 ya lo había medido —2 de 300 (0.67 %)— como fallo residual esperado de los reintentos. Falta el proceso de reconciliación que la Semana 6 pidió: queda en el **Issue #46**.

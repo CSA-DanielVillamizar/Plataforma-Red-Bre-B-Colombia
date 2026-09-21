@@ -69,6 +69,25 @@ def publicar(tid, credencial):
         "routing_key": "", "payload": json.dumps(sobre), "payload_encoding": "string"})
 
 
+def verificar_api():
+    """Falla temprano y con un mensaje util, no con un traceback."""
+    try:
+        urllib.request.urlopen(API + "/swagger/index.html", timeout=4)
+    except Exception:
+        print()
+        print("[X] Nadie responde en %s" % API)
+        print()
+        print("    Si arrancaste con  dotnet run --urls http://localhost:%s" % PUERTO)
+        print("    revisa que la consola diga 'Bus started'.")
+        print("    Si arrancaste desde Visual Studio (Ctrl+F5) o con 'dotnet run' a secas,")
+        print("    el puerto es 5051:   python %s 5051" % sys.argv[0])
+        print()
+        sys.exit(1)
+
+
+verificar_api()
+
+
 print("=" * 78)
 print("  LA PUERTA QUE EL JWT NO CUIDA")
 print("=" * 78)
