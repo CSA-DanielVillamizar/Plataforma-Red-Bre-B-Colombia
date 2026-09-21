@@ -43,7 +43,10 @@ def arrancar(clave=None, anterior=None):
     salida = open(os.path.join(AQUI, "rotacion-clase9.log"), "w+", encoding="utf-8", errors="replace")
     proc = subprocess.Popen(
         ["dotnet", "run", "--no-build", "--no-launch-profile", "--urls", API],
-        cwd=PROYECTO, env=env, stdout=salida, stderr=subprocess.STDOUT)
+        cwd=PROYECTO, env=env, stdout=salida, stderr=subprocess.STDOUT,
+        # En Mac/Linux, un grupo de procesos propio para poder detener
+        # 'dotnet run' Y la aplicacion que lanza (son dos procesos).
+        start_new_session=(os.name != "nt"))
     proc.salida = salida
     return proc
 
@@ -67,7 +70,15 @@ def esperar(proc, segundos=60):
 
 
 def detener(proc):
-    subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], capture_output=True)
+    """Detiene 'dotnet run' y la aplicacion hija, en Windows, Mac o Linux."""
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], capture_output=True)
+    else:
+        import signal
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        except ProcessLookupError:
+            pass
     proc.wait()
 
 

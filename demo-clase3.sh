@@ -8,9 +8,14 @@
 #    ./demo-clase3.sh compensar    → compensación por timeout (15s)
 #    ./demo-clase3.sh reset        → restablece el saldo a 5000
 #    ./demo-clase3.sh estado       → muestra saldo y sagas en vuelo
+#    ./demo-clase3.sh feliz 5051   → otro puerto (Visual Studio usa 5051)
 # ─────────────────────────────────────────────────────────────
 
-API="http://localhost:5080"
+# Puerto: segundo argumento. Por defecto 5080 (dotnet run --urls ...).
+# Desde Visual Studio (Ctrl+F5) o con "dotnet run" a secas es 5051:
+#   ./demo-clase3.sh feliz 5051
+PUERTO="${2:-5080}"
+API="http://localhost:$PUERTO"
 CUENTA="11111111-1111-1111-1111-111111111111"
 PG="docker exec breb-postgres psql -U postgres -d brebcuentas"
 
@@ -58,7 +63,7 @@ preflight() {
         echo -e "\n${R}✗ La aplicación NO está corriendo en $API${N}"
         echo -e "  Arráncala en otra terminal:"
         echo -e "     ${B}cd src/Breb.Cuentas${N}"
-        echo -e "     ${B}dotnet run --urls http://localhost:5080${N}"
+        echo -e "     ${B}dotnet run --urls http://localhost:$PUERTO${N}"
         echo -e "  Espera a ver: ${B}Bus started: rabbitmq://localhost/${N}"
         fallo=1
     fi

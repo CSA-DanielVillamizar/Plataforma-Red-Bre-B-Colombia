@@ -135,7 +135,9 @@ gh pr create \
 
 ### 💻 Levantar el proyecto localmente
 
-**Prerrequisitos:** .NET 8 SDK · Docker Desktop · `dotnet tool install --global dotnet-ef`
+**Prerrequisitos:** .NET 8 SDK · Docker Desktop · Python 3 (para los scripts de prueba) · `dotnet tool install --global dotnet-ef`
+
+> **Para el E1:** la guía paso a paso de cada Issue que se puede sustentar está en [`docs/e1-guia-por-issue.md`](docs/e1-guia-por-issue.md).
 
 **1. Levantar la infraestructura** (RabbitMQ + PostgreSQL):
 
@@ -149,52 +151,105 @@ Espera a que ambos digan `(healthy)` — RabbitMQ tarda ~40 segundos:
 docker compose ps
 ```
 
-**2. Crear las tablas:**
+Y comprueba que los puertos **sí** se publicaron:
 
 ```bash
-cd src/Breb.Cuentas && dotnet ef database update
+docker port breb-rabbitmq
 ```
 
-**3. Insertar una cuenta de prueba:**
+Debe mostrar `5672/tcp -> 0.0.0.0:5673`. **Si sale vacío, otro programa tiene el puerto**, aunque el contenedor diga `healthy`.
+
+**2. Compilar y crear las tablas** — compilar **primero**; sin eso, `dotnet ef` falla con `NETSDK1004: Assets file ... not found`:
 
 ```bash
-docker exec -it breb-postgres psql -U postgres -d brebcuentas -c "INSERT INTO \"Cuentas\" (\"Id\", \"SaldoDisponible\", \"SaldoRetenido\") VALUES ('11111111-1111-1111-1111-111111111111', 5000, 0);"
+cd src/Breb.Cuentas
+dotnet build
+dotnet ef database update
 ```
 
-**4. Ejecutar la aplicación:**
+**3. Crear las cuentas de prueba** (desde la raíz del repositorio):
 
 ```bash
-cd src/Breb.Cuentas && dotnet run
+# bash
+docker exec -i breb-postgres psql -U postgres -d brebcuentas < scripts/cuentas-base.sql
+docker exec -i breb-postgres psql -U postgres -d brebcuentas < scripts/cuentas-prueba-semana5.sql
 ```
 
-Swagger queda en `http://localhost:5051/swagger` · Panel de RabbitMQ en `http://localhost:15672` (`guest`/`guest`)
+```powershell
+# PowerShell
+Get-Content scripts\cuentas-base.sql | docker exec -i breb-postgres psql -U postgres -d brebcuentas
+Get-Content scripts\cuentas-prueba-semana5.sql | docker exec -i breb-postgres psql -U postgres -d brebcuentas
+```
+
+`cuentas-base.sql` crea las cuentas `1111…` (todas las demos) y `2222…` (el deadlock). `cuentas-prueba-semana5.sql` crea las 20 cuentas `aaaaaaaa-…` de las pruebas de carga.
+
+> **Para volver a empezar** —por ejemplo entre una demo y otra—, con 0 sagas en vuelo: `scripts/reset-laboratorio.sql` (se corre igual que los anteriores). Borra sagas y retenciones y restablece los saldos **juntos**; un `UPDATE` a mano a los saldos deja el total descuadrado contra el detalle de `Retenciones`.
+
+**4. Ejecutar la aplicación** — en el puerto **5080**, que es el que usan todos los scripts por defecto:
+
+```bash
+cd src/Breb.Cuentas
+dotnet run --urls http://localhost:5080
+```
+
+Espera **dos** líneas:
+
+```
+[JWT] Ambiente Development · firma con kid=9f9a7028
+Bus started: rabbitmq://localhost:5673/
+```
+
+Swagger en `http://localhost:5080/swagger` · Panel de RabbitMQ en `http://localhost:15673` (`guest`/`guest`)
+
+> **Si usas Visual Studio (Ctrl+F5) o `dotnet run` a secas, la app queda en el 5051.** Todos los scripts aceptan el puerto: `.\demo-clase3.ps1 feliz -Puerto 5051`, `./demo-clase3.sh feliz 5051`, `python pruebas-autorizacion-clase9.py 5051`.
+
+#### 🔑 La API pide token
+
+Desde la Semana 8, `/retener` y `/confirmar-abono` exigen un JWT. Usuario y contraseña van **en el cuerpo**, y el rol lo decide el servidor:
+
+```bash
+curl -X POST http://localhost:5080/token -H "Content-Type: application/json" -d '{"usuario":"ana.operadora","clave":"Operadora-2026"}'
+```
+
+```powershell
+$cuerpo = @{ usuario = "ana.operadora"; clave = "Operadora-2026" } | ConvertTo-Json
+$token = (Invoke-RestMethod -Method Post http://localhost:5080/token -Body $cuerpo -ContentType "application/json").token
+```
+
+| Usuario | Contraseña | Rol | Puede |
+|---|---|---|---|
+| `ana.operadora` | `Operadora-2026` | operador | Retener fondos, leer saldos |
+| `luis.consulta` | `Consulta-2026` | consulta | Leer saldos |
+| `core-bancario` | `CoreBancario-2026` | banco | Confirmar abonos |
+
+Usuarios **de laboratorio**, documentados a propósito: no son secretos. El token se envía como `Authorization: Bearer <token>` y dura 15 minutos. Los scripts de demo lo piden solos.
+
+#### 🧪 Scripts
+
+| Script | Qué hace | Ejemplo |
+|---|---|---|
+| `demo-clase3.ps1` / `demo-clase3.sh` | La saga: camino feliz y compensación | `.\demo-clase3.ps1 feliz -Puerto 5080` · `./demo-clase3.sh compensar` |
+| `carga-clase4.ps1` | Carga concurrente sobre una cuenta (PowerShell) | `.\carga-clase4.ps1 -N 200 -Concurrencia 20 -Puerto 5080` |
+| `carga-clase5.py` | Carga repartida en cuentas e instancias | `python carga-clase5.py "prueba" 5080 20 300 40` |
+| `pruebas-jwt-clase8.py` | Ocho ataques al JWT | `python pruebas-jwt-clase8.py` |
+| `pruebas-autorizacion-clase9.py` | Matriz 401/403 | `python pruebas-autorizacion-clase9.py` |
+| `ataque-broker-clase9.py` | Confirmación falsa por RabbitMQ | `python ataque-broker-clase9.py` |
+| `rotacion-clase9.py` | Arranques inválidos y rotación de clave (puerto 5085) | `python rotacion-clase9.py` |
 
 #### ⚠️ Notas importantes
 
 | Tema | Detalle |
 |---|---|
+| **Puertos** | RabbitMQ en **5673** (panel **15673**) y PostgreSQL en **5433**, no los puertos por defecto, para no chocar con otros proyectos. |
 | **MassTransit** | Fijado en **8.5.2**. La v9 requiere licencia comercial y la app no arranca sin ella. **No actualices** estos paquetes. |
-| **RabbitMQ** | Fijado en **3.12-management**. La 3.13 falla en Docker Desktop/Windows con `.erlang.cookie: eacces`. |
-| **PostgreSQL** | Expuesto en el puerto **5433** (no 5432) para no chocar con instalaciones locales. |
+| **RabbitMQ** | Imagen `masstransit/rabbitmq`: trae el plugin de mensajes diferidos que la saga necesita para su reloj de 15 s. |
 | **Healthcheck** | No usa `rabbitmq-diagnostics`: corre como root y corrompe los permisos de la cookie de Erlang, matando el contenedor. |
-| **Credenciales** | `dev_only_password` y `guest/guest` son de **desarrollo local únicamente**. Nunca uses estos valores fuera de tu máquina. |
+| **Credenciales** | `dev_only_password`, `guest/guest` y la clave JWT de `appsettings.Development.json` son de **desarrollo local únicamente**. Fuera de Development la app **se niega a arrancar** con esa clave. |
+| **Docker reiniciado** | Los contenedores quedan en `Exited`: `docker compose up -d` otra vez. |
 
 #### Verificar que el Outbox funciona
 
-```bash
-# 1. Apaga la mensajería
-docker compose stop rabbitmq
-
-# 2. Dispara una transferencia desde Swagger → responde HTTP 200 igual
-
-# 3. El evento quedó guardado, esperando:
-docker exec -it breb-postgres psql -U postgres -d brebcuentas -c "SELECT COUNT(*) FROM \"OutboxMessage\";"
-
-# 4. Revive la mensajería → el mensaje sale solo
-docker compose start rabbitmq
-```
-
-> Si `OutboxMessage` da **0** después de una transferencia exitosa, **es lo correcto**: MassTransit borra la fila una vez entregado el mensaje. Para verla con contenido hay que apagar RabbitMQ primero, como en el paso 1.
+La prueba completa, con token, está en la guía del E1: [`docs/e1-guia-por-issue.md`](docs/e1-guia-por-issue.md#issue-13--outbox).
 
 ---
 ---
