@@ -80,7 +80,7 @@ curl -X POST -H "Authorization: Bearer $TOKEN" "http://localhost:5080/cuentas/11
 SELECT COUNT(*) FROM "OutboxMessage";
 ```
 
-→ **RESULTADO_13_ANTES**
+→ **1** (medido): el evento está guardado, esperando.
 
 **5. Revivir la mensajería:**
 
@@ -94,7 +94,7 @@ Espera a que la consola de la app muestre `Procesando FondosRetenidos` y vuelve 
 SELECT COUNT(*) FROM "OutboxMessage";
 ```
 
-→ **RESULTADO_13_DESPUES**
+→ **0** (medido). `Procesando FondosRetenidos` apareció **29 segundos** después de `docker compose start rabbitmq`: RabbitMQ tarda en arrancar y MassTransit en reconectarse. Tengan paciencia en vivo.
 
 **Qué explicar (brazo 3):** el saldo y el evento se guardan en **la misma transacción** de PostgreSQL. Si la base confirma, el evento existe; publicarlo es trabajo de un proceso aparte que reintenta hasta que el broker responde. **Nadie reenvió nada.**
 
@@ -127,7 +127,7 @@ SELECT COUNT(*) FROM "OutboxMessage";
 | `feliz` | 5000 / 0 | 4900 / 100, saga `EsperandoConfirmacion` | **4900 / 100** | 0 |
 | `compensar` | 5000 / 0 | 4900 / 100, saga `EsperandoConfirmacion` | **5000 / 0** | 0 |
 
-La demo `feliz` dice **a cuántos segundos** envió la confirmación. Medido: RESULTADO_16_SEG. Si alguna vez dice más de 15, la saga ya compensó: es la carrera contra el reloj, y ese número es la explicación.
+La demo `feliz` dice **a cuántos segundos** envió la confirmación. Medido en el clon limpio: **6 s** en bash y **5.2 s** en PowerShell. Si alguna vez dice más de 15, la saga ya compensó: es la carrera contra el reloj, y ese número es la explicación.
 
 **Qué explicar (brazo 3):**
 
@@ -148,7 +148,7 @@ La demo `feliz` dice **a cuántos segundos** envió la confirmación. Medido: RE
 .\carga-clase4.ps1 -N 200 -Concurrencia 20 -Puerto 5080
 ```
 
-→ RESULTADO_18_CARGA
+→ Medido: **200 de 200, 0 errores**, p95 1 317 ms, máxima 3 204 ms, dentro del SLA de 20 s. (Throughput 3.2 transf/s: el generador de PowerShell es lento por diseño; la Semana 5 explica por qué.)
 
 > En bash no hay `carga-clase4`; el equivalente es `python carga-clase5.py "linea base" 5080 1 200 20`.
 
@@ -187,7 +187,9 @@ UPDATE "Cuentas" SET "SaldoDisponible" = "SaldoDisponible" - 10 WHERE "Id" = '11
 → En aproximadamente un segundo, una de las dos muere:
 
 ```
-RESULTADO_18_DEADLOCK
+ERROR:  deadlock detected
+DETAIL:  Process 6289 waits for ShareLock on transaction 4275; blocked by process 6296.
+HINT:  See server log for query details.
 ```
 
 Después, en **las dos** sesiones:
@@ -233,11 +235,13 @@ dotnet run --no-build --urls http://localhost:5082
 
 | Cola | Consumers |
 |---|---|
-| `FondosRetenidos` | RESULTADO_20_CONSUMERS |
-| `CompensarTransferencia` | RESULTADO_20_CONSUMERS |
-| `TransferenciaSagaState` | RESULTADO_20_CONSUMERS |
+| `FondosRetenidos` | **3** |
+| `CompensarTransferencia` | **3** |
+| `TransferenciaSagaState` | **3** |
 
-**3. La matriz** (desde la raíz del repo). Entre corrida y corrida, espera a que `SELECT COUNT(*) FROM "TransferenciaSagas";` dé **0**:
+> El panel actualiza el contador cada pocos segundos: si justo arrancó la tercera instancia y ven **2**, refresquen. Nos pasó en la verificación.
+
+**3. La matriz** (desde la raíz del repo). Durante la carga, la consola de las instancias va a mostrar excepciones `40001: could not serialize access`: **son reintentos, no fallas**. Lo que importa es que no aparezca `R-FAULT`. Entre corrida y corrida, espera a que `SELECT COUNT(*) FROM "TransferenciaSagas";` dé **0**:
 
 ```bash
 python carga-clase5.py "1 inst - 1 cuenta" 5080 1 300 40
@@ -248,7 +252,14 @@ python carga-clase5.py "3 inst - 20 ctas"  5080,5081,5082 20 300 40
 
 Medido en el clon limpio:
 
-RESULTADO_20_MATRIZ
+| Escenario | Throughput | p95 | Máxima |
+|---|---|---|---|
+| 1 instancia · 1 cuenta | 22.63 t/s | 3 893 ms | 6 624 ms |
+| **3 instancias · 1 cuenta** | **20.93 t/s** | **6 153 ms** | **13 895 ms** |
+| 1 instancia · 20 cuentas | 161.00 t/s | 342 ms | 481 ms |
+| 3 instancias · 20 cuentas | 168.57 t/s | 399 ms | 527 ms |
+
+Las cuatro corridas: 300 de 300, **0 errores**, 0 R-FAULT, 0 sagas y 0 retenciones huérfanas al final.
 
 **Qué explicar (brazo 3):** las tres instancias calculan el mismo nombre de cola y RabbitMQ reparte los mensajes. Pero con **una** cuenta, todas las peticiones hacen fila por la misma fila de PostgreSQL (`FOR UPDATE`): más instancias solo agregan competidores por el mismo candado. Con 20 cuentas el trabajo sí se reparte.
 
@@ -262,23 +273,29 @@ RESULTADO_20_MATRIZ
 
 **Qué se demuestra:** la reproducción mínima que antes dejaba sagas zombis, ahora termina con **0**.
 
-```sql
--- en psql: limpiar
-TRUNCATE "TransferenciaSagas"; TRUNCATE "MensajesProcesados";
-UPDATE "Cuentas" SET "SaldoDisponible" = 100000000, "SaldoRetenido" = 0;
+**1. Reiniciar el laboratorio** (con 0 sagas en vuelo):
+
+```bash
+docker exec -i breb-postgres psql -U postgres -d brebcuentas < scripts/reset-laboratorio.sql
 ```
+
+```powershell
+Get-Content scriptseset-laboratorio.sql | docker exec -i breb-postgres psql -U postgres -d brebcuentas
+```
+
+**2. La reproducción mínima:**
 
 ```bash
 python carga-clase5.py "reproducir" 5080 1 30 3
 ```
 
-Espera **60 segundos** y en `psql`:
+**3.** Espera **60 segundos** y en `psql`:
 
 ```sql
 SELECT "CurrentState", COUNT(*) FROM "TransferenciaSagas" GROUP BY 1;
 ```
 
-→ RESULTADO_21
+→ Medido: **0 filas**. Ninguna saga atascada (a los 20 s ya estaba vacía).
 
 **Qué explicar (brazo 3):** el defecto venía de dos cosas medidas: reintentos a intervalo fijo que sincronizaban las colisiones (`40001`) y una máquina de estados que no toleraba eventos fuera de orden. Se corrigió con reintento **exponencial con dispersión** y declarando qué hacer con cada evento en cada estado.
 
@@ -289,6 +306,18 @@ SELECT "CurrentState", COUNT(*) FROM "TransferenciaSagas" GROUP BY 1;
 ## Issue #23 — La retención como entidad
 
 **Qué se demuestra:** cada retención deja rastro —quién, cuánto, cuándo se creó y cuándo se liberó— y eso permite encontrar el dinero atascado.
+
+**0. Partir de un estado limpio** — obligatorio si antes corrieron otras demos (con 0 sagas en vuelo):
+
+```bash
+docker exec -i breb-postgres psql -U postgres -d brebcuentas < scripts/reset-laboratorio.sql
+```
+
+```powershell
+Get-Content scriptseset-laboratorio.sql | docker exec -i breb-postgres psql -U postgres -d brebcuentas
+```
+
+> **Por qué, medido:** sin este paso, después de las demos del #16 la consulta de cuadre devolvió 1 fila y la de huérfanas 2. No era un error: las demos `feliz` dejan retenciones completadas que nunca se liberan, y los reinicios a mano de los scripts ponen `SaldoRetenido = 0` sin tocar la tabla `Retenciones`. `reset-laboratorio.sql` limpia las dos cosas juntas.
 
 **1. Sesenta transferencias que se compensan solas:**
 
@@ -305,7 +334,7 @@ SELECT "TransferenciaId", "MontoUVB", "Liberada", "CreadaEn"::time(0), "Liberada
 FROM "Retenciones" ORDER BY "CreadaEn" DESC LIMIT 5;
 ```
 
-→ RESULTADO_23_RASTRO
+→ Medido: cada fila con `Liberada = t`, `CreadaEn` y `LiberadaEn` unos 17 segundos después (el reloj de 15 s más el procesamiento). Las 60 de 60 quedaron liberadas.
 
 **3. El total cuadra con el detalle** (debe devolver **cero filas**; espera a que no haya sagas vivas):
 
@@ -317,7 +346,7 @@ GROUP BY c."Id", c."SaldoRetenido"
 HAVING c."SaldoRetenido" <> COALESCE(SUM(r."MontoUVB"),0);
 ```
 
-→ RESULTADO_23_CUADRE
+→ Medido: **0 filas**.
 
 **4. Retenciones huérfanas** — vivas, sin saga, de hace más de un minuto:
 
@@ -329,7 +358,7 @@ WHERE NOT r."Liberada" AND s."CorrelationId" IS NULL
   AND r."CreadaEn" < (now() AT TIME ZONE 'UTC') - interval '1 minute';
 ```
 
-→ RESULTADO_23_HUERFANAS
+→ Medido: **0 filas**.
 
 **Qué explicar (brazo 3):** antes `SaldoRetenido` era solo un número: si quedaba en 2, nadie sabía de quién eran ni desde cuándo. Ahora cada retención es una fila con `TransferenciaId`, y por eso esa última consulta se puede escribir.
 

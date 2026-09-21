@@ -183,6 +183,8 @@ Get-Content scripts\cuentas-prueba-semana5.sql | docker exec -i breb-postgres ps
 
 `cuentas-base.sql` crea las cuentas `1111…` (todas las demos) y `2222…` (el deadlock). `cuentas-prueba-semana5.sql` crea las 20 cuentas `aaaaaaaa-…` de las pruebas de carga.
 
+> **Para volver a empezar** —por ejemplo entre una demo y otra—, con 0 sagas en vuelo: `scripts/reset-laboratorio.sql` (se corre igual que los anteriores). Borra sagas y retenciones y restablece los saldos **juntos**; un `UPDATE` a mano a los saldos deja el total descuadrado contra el detalle de `Retenciones`.
+
 **4. Ejecutar la aplicación** — en el puerto **5080**, que es el que usan todos los scripts por defecto:
 
 ```bash
