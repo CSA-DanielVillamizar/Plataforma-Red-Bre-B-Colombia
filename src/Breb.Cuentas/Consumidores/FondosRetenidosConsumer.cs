@@ -33,6 +33,7 @@ public class FondosRetenidosConsumer : IConsumer<FondosRetenidos>
             return;                       // salimos sin efecto
         }
 
+        Observabilidad.Telemetria.EtiquetarTransferencia(context.Message.TransferenciaId);
         _logger.LogInformation(
             "Procesando FondosRetenidos: transferencia {TransferenciaId}, {Monto} UVB",
             context.Message.TransferenciaId, context.Message.MontoUVB);

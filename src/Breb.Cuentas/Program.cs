@@ -5,14 +5,19 @@ using Breb.Cuentas.Consumidores;
 using Breb.Cuentas.Contratos;
 using Breb.Cuentas.Sagas;
 using Breb.Cuentas.Seguridad;
+using Breb.Cuentas.Observabilidad;
 using Serilog;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Logging legible en consola (para la demo) ──
 builder.Host.UseSerilog((ctx, cfg) => cfg
+    // Semana 9: cada línea lleva el TraceId de la operación que la produjo.
+    // Con eso, "todo lo que pasó en ESTA transferencia" es un grep, aunque
+    // las líneas vengan de la petición HTTP, del consumidor y de la saga.
     .WriteTo.Console(outputTemplate:
-        "[{Timestamp:HH:mm:ss}] {Level:u3} {Message:lj}{NewLine}{Exception}"));
+        "[{Timestamp:HH:mm:ss}] {Level:u3} {Message:lj}  traza={TraceId}{NewLine}{Exception}"));
 
 // ── Base de datos ──
 // ⚠️ Port=5433 — debe coincidir con el lado IZQUIERDO del docker-compose
@@ -120,6 +125,9 @@ builder.Services.AddSwaggerGen();
 // clave de desarrollo en producción).
 builder.AgregarAutenticacionJwt();
 
+// ── Observabilidad (Semana 9) ───────────────────────────────────────────
+builder.AgregarTelemetria();
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -131,6 +139,14 @@ app.UseSwaggerUI();
 //   autorización  = ¿puedes hacer esto?  (mira el resultado de lo anterior)
 // Al revés, la autorización se ejecuta sin saber quién es nadie, y todo
 // endpoint protegido devuelve 401 aunque el token sea perfecto.
+// Semana 9: cada respuesta dice a qué traza pertenece. Cuando un cliente
+// reporte "mi transferencia falló", ese número lleva directo a la traza.
+app.Use(async (ctx, next) =>
+{
+    ctx.Response.Headers["X-Trace-Id"] = Activity.Current?.TraceId.ToString() ?? "";
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -204,6 +220,7 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
         if (cuenta is null) return Results.NotFound("Cuenta no existe.");
 
         var transferenciaId = Guid.NewGuid();
+        Telemetria.EtiquetarTransferencia(transferenciaId);
 
         // Semana 6: Retener ahora devuelve la RETENCIÓN, no solo muta un número.
         // Queda una fila que dice exactamente quién retuvo cuánto y cuándo.
@@ -248,6 +265,7 @@ app.MapPost("/transferencias/{transferenciaId:guid}/confirmar-abono",
         // necesita su SaveChanges, incluso si no hay cambios de datos.
         await db.SaveChangesAsync();
 
+        Telemetria.EtiquetarTransferencia(transferenciaId);
         Log.Information("Abono confirmado para {TransferenciaId}", transferenciaId);
         return Results.Accepted();
     })
