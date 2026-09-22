@@ -1,0 +1,46 @@
+# Peticiones de la API Bre-B para Visual Studio / VS Code (REST Client).
+# Puerto 5051 = Visual Studio con Ctrl+F5. Con "dotnet run --urls" use 5080.
+@api = http://localhost:5051
+@cuenta = 11111111-1111-1111-1111-111111111111
+
+### 1. Token de OPERADOR (usuarios de laboratorio, documentados: no son secretos)
+# @name operador
+POST {{api}}/token
+Content-Type: application/json
+
+{ "usuario": "ana.operadora", "clave": "Operadora-2026" }
+
+### 2. Token de CONSULTA
+# @name consulta
+POST {{api}}/token
+Content-Type: application/json
+
+{ "usuario": "luis.consulta", "clave": "Consulta-2026" }
+
+### 3. Token del BANCO DESTINO (identidad de servicio)
+# @name banco
+POST {{api}}/token
+Content-Type: application/json
+
+{ "usuario": "core-bancario", "clave": "CoreBancario-2026" }
+
+### 4. Retener como operador -> 200
+# @name retencion
+POST {{api}}/cuentas/{{cuenta}}/retener?montoUVB=10
+Authorization: Bearer {{operador.response.body.token}}
+
+### 5. Retener como consulta -> 403
+POST {{api}}/cuentas/{{cuenta}}/retener?montoUVB=10
+Authorization: Bearer {{consulta.response.body.token}}
+
+### 6. Confirmar el abono como banco -> 202
+POST {{api}}/transferencias/{{retencion.response.body.transferenciaId}}/confirmar-abono
+Authorization: Bearer {{banco.response.body.token}}
+
+### 7. Leer saldo como consulta -> 200
+GET {{api}}/cuentas/{{cuenta}}/saldo
+Authorization: Bearer {{consulta.response.body.token}}
+
+### 8. Qué dice mi token
+GET {{api}}/quien-soy
+Authorization: Bearer {{operador.response.body.token}}

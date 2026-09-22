@@ -8,9 +8,14 @@
 #    ./demo-clase3.sh compensar    → compensación por timeout (15s)
 #    ./demo-clase3.sh reset        → restablece el saldo a 5000
 #    ./demo-clase3.sh estado       → muestra saldo y sagas en vuelo
+#    ./demo-clase3.sh feliz 5051   → otro puerto (Visual Studio usa 5051)
 # ─────────────────────────────────────────────────────────────
 
-API="http://localhost:5080"
+# Puerto: segundo argumento. Por defecto 5080 (dotnet run --urls ...).
+# Desde Visual Studio (Ctrl+F5) o con "dotnet run" a secas es 5051:
+#   ./demo-clase3.sh feliz 5051
+PUERTO="${2:-5080}"
+API="http://localhost:$PUERTO"
 CUENTA="11111111-1111-1111-1111-111111111111"
 PG="docker exec breb-postgres psql -U postgres -d brebcuentas"
 
@@ -19,8 +24,11 @@ V='\033[1;32m'; R='\033[1;31m'; A='\033[1;33m'; C='\033[1;36m'; N='\033[0m'; B='
 
 linea() { echo -e "${C}════════════════════════════════════════════════════════════${N}"; }
 
+# Filtra por la cuenta de la demo: desde la Clase 4 hay más cuentas (2222...
+# para el deadlock y las aaaa... de la carga de la Clase 5), y sin el WHERE
+# saldría un saldo por cada una.
 saldo() {
-    $PG -t -c "SELECT '   Disponible: ' || \"SaldoDisponible\" || '   |   Retenido: ' || \"SaldoRetenido\" FROM \"Cuentas\";" 2>/dev/null | grep -v '^$'
+    $PG -t -c "SELECT '   Disponible: ' || \"SaldoDisponible\" || '   |   Retenido: ' || \"SaldoRetenido\" FROM \"Cuentas\" WHERE \"Id\"='$CUENTA';" 2>/dev/null | grep -v '^$'
 }
 
 sagas() {
@@ -30,7 +38,7 @@ sagas() {
 }
 
 reset_saldo() {
-    $PG -c "UPDATE \"Cuentas\" SET \"SaldoDisponible\"=5000, \"SaldoRetenido\"=0; DELETE FROM \"MensajesProcesados\"; DELETE FROM \"TransferenciaSagas\";" >/dev/null 2>&1
+    $PG -c "UPDATE \"Cuentas\" SET \"SaldoDisponible\"=5000, \"SaldoRetenido\"=0 WHERE \"Id\"='$CUENTA'; DELETE FROM \"MensajesProcesados\"; DELETE FROM \"TransferenciaSagas\";" >/dev/null 2>&1
 }
 
 # Verifica que la infraestructura Y la aplicación estén arriba.
@@ -54,8 +62,8 @@ preflight() {
     if [ "$code" != "200" ]; then
         echo -e "\n${R}✗ La aplicación NO está corriendo en $API${N}"
         echo -e "  Arráncala en otra terminal:"
-        echo -e "     ${B}cd Breb.Platform/Breb.Cuentas${N}"
-        echo -e "     ${B}dotnet run --urls http://localhost:5080${N}"
+        echo -e "     ${B}cd src/Breb.Cuentas${N}"
+        echo -e "     ${B}dotnet run --urls http://localhost:$PUERTO${N}"
         echo -e "  Espera a ver: ${B}Bus started: rabbitmq://localhost/${N}"
         fallo=1
     fi
@@ -64,6 +72,26 @@ preflight() {
         echo -e "\n${A}La demo no puede continuar hasta resolver lo anterior.${N}\n"
         exit 1
     fi
+}
+
+# Desde la Semana 8 la API exige un JWT, y cada operación pide su ROL:
+#   /retener          → ana.operadora  (rol operador)
+#   /confirmar-abono  → core-bancario  (rol banco: lo confirma el banco destino)
+# Usuarios de LABORATORIO, documentados: no son secretos.
+pedir_token() {
+    local r=$(curl -s -X POST --max-time 10 -H "Content-Type: application/json" \
+              -d "{\"usuario\":\"$1\",\"clave\":\"$2\"}" "$API/token")
+    T=$(echo "$r" | python -c "import sys,json;print(json.load(sys.stdin)['token'])" 2>/dev/null)
+    if [ -z "$T" ]; then
+        echo -e "\n${R}✗ No se pudo obtener un token para $1 en $API/token${N}"
+        echo -e "  ¿Corre la versión de la Semana 8 (segunda sesión) o posterior?\n"
+        exit 1
+    fi
+}
+
+token() {
+    pedir_token "ana.operadora" "Operadora-2026";    TOKEN=$T
+    pedir_token "core-bancario" "CoreBancario-2026"; TOKEN_BANCO=$T
 }
 
 case "${1:-}" in
@@ -78,7 +106,8 @@ feliz)
     echo -e "\n${B}1. Saldo inicial:${N}"; saldo
 
     echo -e "\n${B}2. El usuario inicia una transferencia de 100 UVB...${N}"
-    RESP=$(curl -s -X POST "$API/cuentas/$CUENTA/retener?montoUVB=100")
+    token
+    RESP=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" "$API/cuentas/$CUENTA/retener?montoUVB=100")
     TID=$(echo "$RESP" | python -c "import sys,json;print(json.load(sys.stdin)['transferenciaId'])" 2>/dev/null)
 
     if [ -z "$TID" ]; then
@@ -88,13 +117,26 @@ feliz)
     fi
     echo -e "   Transferencia: ${A}$TID${N}"
 
-    sleep 3
+    # La confirmación se PROGRAMA ya, a los 5 s de retener, en segundo plano.
+    # Antes se enviaba después de consultar el saldo, y cada 'docker exec'
+    # tarda 1-1.6 s (medido); con Docker lento, la confirmación llegaba pasados
+    # los 15 s y la saga compensaba en pleno "camino feliz".
+    T0=$(date +%s)
+    CONF=$(mktemp)
+    ( sleep 5
+      code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+             -H "Authorization: Bearer $TOKEN_BANCO" "$API/transferencias/$TID/confirmar-abono")
+      echo "$code $(( $(date +%s) - T0 ))" > "$CONF" ) &
+
+    sleep 2
     echo -e "\n${B}3. Saldo tras retener — ${A}se retuvieron 100 UVB${N}${B}:${N}"; saldo; sagas
     echo -e "   ${C}↑ 100 UVB salieron de Disponible y pasaron a Retenido.${N}"
     echo -e "   ${C}  El dinero está EN TRÁNSITO: ni en origen ni en destino.${N}"
 
     echo -e "\n${B}4. El banco destino confirma el abono (dentro de los 15s)...${N}"
-    curl -s -X POST "$API/transferencias/$TID/confirmar-abono" -o /dev/null -w "   Respuesta: HTTP %{http_code}\n"
+    wait
+    read CODIGO SEG < "$CONF"; rm -f "$CONF"
+    echo -e "   Respuesta: HTTP $CODIGO — enviada a los ${SEG} s de retener (límite: 15 s)"
 
     echo -e "\n   Esperando cierre de la saga..."
     sleep 6
@@ -115,7 +157,8 @@ compensar)
     echo -e "\n${B}1. Saldo inicial:${N}"; saldo
 
     echo -e "\n${B}2. El usuario inicia una transferencia de 100 UVB...${N}"
-    RESP=$(curl -s -X POST "$API/cuentas/$CUENTA/retener?montoUVB=100")
+    token
+    RESP=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" "$API/cuentas/$CUENTA/retener?montoUVB=100")
     TID=$(echo "$RESP" | python -c "import sys,json;print(json.load(sys.stdin)['transferenciaId'])" 2>/dev/null)
 
     if [ -z "$TID" ]; then
