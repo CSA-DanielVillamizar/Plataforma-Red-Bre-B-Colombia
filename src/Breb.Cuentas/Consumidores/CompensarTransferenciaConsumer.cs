@@ -38,6 +38,7 @@ public class CompensarTransferenciaConsumer : IConsumer<CompensarTransferencia>
     {
         var msg = context.Message;
 
+        Observabilidad.Telemetria.EtiquetarTransferencia(msg.TransferenciaId);
         _logger.LogWarning("COMPENSANDO transferencia {Id}: {Motivo}",
                            msg.TransferenciaId, msg.Motivo);
 

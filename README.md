@@ -235,6 +235,19 @@ Usuarios **de laboratorio**, documentados a propósito: no son secretos. El toke
 | `pruebas-autorizacion-clase9.py` | Matriz 401/403 | `python pruebas-autorizacion-clase9.py` |
 | `ataque-broker-clase9.py` | Confirmación falsa por RabbitMQ | `python ataque-broker-clase9.py` |
 | `rotacion-clase9.py` | Arranques inválidos y rotación de clave (puerto 5085) | `python rotacion-clase9.py` |
+| `trazas-clase10.py` | Trazas: camino feliz, compensación, Outbox, secretos (requiere Jaeger) | `python trazas-clase10.py` |
+| `costo-trazas-clase10.py` | Carga con y sin trazas, A-B-B-A (levanta su propia API) | `python costo-trazas-clase10.py` |
+
+#### 🔭 Observabilidad (Semana 9) — opcional, no hace falta para el E1
+
+Jaeger va en un **perfil** aparte: `docker compose up -d` no lo levanta.
+
+```bash
+docker compose --profile observabilidad up -d
+docker port breb-jaeger
+```
+
+UI en `http://localhost:16687` (no el 16686 por defecto: puede estar tomado por otro proyecto). Cada respuesta de la API trae la cabecera `X-Trace-Id`, y cada línea de log termina con `traza=<TraceId>`. Si Jaeger no está corriendo, la aplicación funciona igual. Detalle en [`docs/mediciones/semana-9-observabilidad.md`](docs/mediciones/semana-9-observabilidad.md).
 
 #### ⚠️ Notas importantes
 
