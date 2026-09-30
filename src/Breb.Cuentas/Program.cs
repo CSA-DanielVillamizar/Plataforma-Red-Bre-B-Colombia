@@ -1,6 +1,7 @@
 ﻿using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Breb.Cuentas.Infraestructura;
+using Breb.Cuentas.Conciliacion;
 using Breb.Cuentas.Consumidores;
 using Breb.Cuentas.Contratos;
 using Breb.Cuentas.Sagas;
@@ -106,6 +107,33 @@ builder.Services.AddMassTransit(x =>
         // La espera exponencial separa los reintentos en el tiempo y el cuarto
         // parametro les agrega dispersion, para que dos transacciones que
         // chocaron no vuelvan a intentarlo en el mismo instante.
+        // ── Segundo nivel: redelivery diferida (Issue #46) ─────────────────
+        // Los diez reintentos de arriba ocurren TODOS dentro de los primeros
+        // segundos. Si la contención dura más que eso, se agotan los diez y el
+        // mensaje se va a la cola _error. Cuando el mensaje que muere es
+        // FondosRetenidos —el que CREA la saga— el resultado es una retención
+        // huérfana: plata apartada que nadie va a devolver nunca, porque el
+        // único que compensa es la saga que no llegó a existir.
+        //
+        // La redelivery diferida agrega un segundo nivel POR ENCIMA del primero:
+        // cuando los diez reintentos inmediatos fracasan, el mensaje no muere,
+        // se guarda y vuelve a entregarse minutos después. Para entonces la
+        // tanda de carga que causaba la contención ya pasó.
+        //
+        // ⚠️ EL ORDEN DE ESTAS DOS LÍNEAS ES SIGNIFICATIVO.
+        // UseDelayedRedelivery va ANTES que UseMessageRetry porque los filtros
+        // se anidan en el orden en que se declaran: la redelivery queda por
+        // fuera y solo actúa cuando el bloque de reintentos de adentro se
+        // rindió por completo. Al revés, cada reintento inmediato dispararía
+        // una redelivery.
+        //
+        // Usa el mismo scheduler del reloj de la saga (UseDelayedMessageScheduler),
+        // así que vive en RabbitMQ y sobrevive a un reinicio de la aplicación.
+        cfg.UseDelayedRedelivery(r => r.Intervals(
+            TimeSpan.FromSeconds(15),
+            TimeSpan.FromSeconds(45),
+            TimeSpan.FromSeconds(90)));
+
         cfg.UseMessageRetry(r => r.Exponential(
             retryLimit:     10,
             minInterval:    TimeSpan.FromMilliseconds(100),
@@ -115,6 +143,11 @@ builder.Services.AddMassTransit(x =>
         cfg.ConfigureEndpoints(context);
     });
 });
+
+// ── La red de seguridad (Issue #46) ─────────────────────────────────────
+// Barre periódicamente las retenciones vivas que no tienen saga y las
+// compensa. Es la única pieza del sistema que repara en vez de prevenir.
+builder.Services.AddHostedService<ConciliadorRetenciones>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
