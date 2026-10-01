@@ -50,6 +50,10 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<FondosRetenidosConsumer>();
     x.AddConsumer<CompensarTransferenciaConsumer>();
 
+    // Issue #46: el camino feliz también tiene que dejar huella en el modelo.
+    // Sin esto, una transferencia exitosa es indistinguible de una huérfana.
+    x.AddConsumer<TransferenciaCompletadaConsumer>();
+
     // Registra el scheduler que la saga usa para sus timeouts.
     x.AddDelayedMessageScheduler();
 

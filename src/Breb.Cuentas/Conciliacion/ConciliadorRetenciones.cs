@@ -139,10 +139,22 @@ public class ConciliadorRetenciones : BackgroundService
 
         var limite = DateTime.UtcNow - _umbral;
 
-        // La consulta del Issue #46, tal cual: retenciones vivas, viejas, y sin
-        // saga que las respalde. El LEFT JOIN del issue aquí es un "not exists".
+        // ⚠️ ESTA CONSULTA NO ES LA DEL ISSUE #46, Y LA DIFERENCIA ES CRÍTICA.
+        //
+        // El issue proponía: "NOT Liberada AND no hay saga". Eso está MAL, y es
+        // la razón por la que había que arreglar el modelo antes que el barrido.
+        //
+        // Una transferencia que se completa bien deja exactamente esa huella:
+        // la saga se borra al finalizar (SetCompletedWhenFinalized) y la
+        // retención nunca se libera, porque el dinero no volvió — salió.
+        // Con la consulta del issue, este conciliador habría compensado TODAS
+        // las transferencias exitosas, devolviendo plata que ya está en el
+        // banco destino. Habría sido mucho peor que el fallo que repara.
+        //
+        // Por eso se agregó Liquidada al modelo: ahora "pendiente" significa
+        // ni devuelta ni gastada, que es la única definición honesta de huérfana.
         var huerfanas = await db.Retenciones
-            .Where(r => !r.Liberada && r.CreadaEn < limite)
+            .Where(r => !r.Liberada && !r.Liquidada && r.CreadaEn < limite)
             .Where(r => !db.TransferenciaSagas.Any(s => s.CorrelationId == r.TransferenciaId))
             .OrderBy(r => r.CreadaEn)
             .Take(_lote)
