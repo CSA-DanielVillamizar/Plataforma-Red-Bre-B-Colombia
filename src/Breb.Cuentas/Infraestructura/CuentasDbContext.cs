@@ -69,6 +69,16 @@ public class CuentasDbContext : DbContext
             e.HasIndex(r => new { r.CuentaId, r.Liberada })
              .HasFilter("\"Liberada\" = false");
 
+            // ── Índice para la conciliación (Issue #46) ─────────────────────
+            // El conciliador pregunta cada minuto por retenciones PENDIENTES
+            // —ni liberadas ni liquidadas— ordenadas por antigüedad. Sin este
+            // índice parcial, esa consulta recorre la tabla entera cada vez, y
+            // la tabla solo crece. Con él, el índice contiene únicamente las
+            // pendientes, que en un sistema sano son casi ninguna.
+            e.HasIndex(r => r.CreadaEn)
+             .HasFilter("\"Liberada\" = false AND \"Liquidada\" = false")
+             .HasDatabaseName("IX_Retenciones_Pendientes");
+
             e.HasOne<Cuenta>()
              .WithMany()
              .HasForeignKey(r => r.CuentaId)
