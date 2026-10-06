@@ -85,27 +85,31 @@ Se traduce en **cinco eventos del 20 %**: parcial, final y **tres seguimientos**
 
 | # | Fecha | Clase | Tema |
 |---|---|---|---|
-| 14 | lun 5-oct | Semana 11 | **MAUI I**: qué es, cómo compila a varias plataformas, primer proyecto |
-| 15 | mié 7-oct | Semana 11 | **MAUI II**: MVVM y binding — la arquitectura de la app |
+| — | ~~lun 5-oct~~ | — | *Sesión no dictada — se corre el Bloque B una sesión* |
+| 14 | mié 7-oct | Semana 11 | **MAUI I**: qué es, cómo compila a varias plataformas, primer proyecto |
 | — | ~~lun 12-oct~~ | — | *Festivo — Día de la Raza* |
-| 16 | mié 14-oct | Semana 12 | **Consumir la API Bre-B** desde el móvil, autenticando con JWT |
-| 17 | lun 19-oct | Semana 13 | **La app offline**: cola local y sincronización. El mismo problema distribuido |
-| 18 | **mié 21-oct** | Semana 13 | 🎯 **E3 — App consumiendo la API** (20 %) |
-| 19 | lun 26-oct | Semana 14 | **Idempotencia desde el cliente**: reintentar sin duplicar la transferencia |
-| 20 | mié 28-oct | Semana 14 | **UI adaptativa** y experiencia en pantalla de teléfono |
+| 15 | mié 14-oct | Semana 12 | **MAUI II**: MVVM y binding — la arquitectura de la app |
+| 16 | lun 19-oct | Semana 13 | **Consumir la API Bre-B** desde el móvil, autenticando con JWT |
+| 17 | **mié 21-oct** | Semana 13 | 🎯 **E3 — App consumiendo la API** (20 %) |
+| 18 | lun 26-oct | Semana 14 | **La app offline e idempotencia desde el cliente**: cola local, sincronización y reintentar sin duplicar |
+| 19 | mié 28-oct | Semana 14 | **UI adaptativa** y experiencia en pantalla de teléfono |
+
+> **Ajuste del 5 de octubre.** La sesión del lunes 5 no se dictó. El Bloque B se corre una sesión y, como el lunes 12 es festivo, quedaban tres clases para cuatro temas antes del E3. Se resolvió **fusionando la app offline con la idempotencia desde el cliente** el 26 de octubre: son el mismo problema —cola local y reintentar sin duplicar— y se cuentan mejor juntos que separados. Es el Outbox y la idempotencia de las Semanas 2 y 6, ahora en el cliente.
+>
+> **Ningún evaluable cambia de fecha.** El E3 sigue el 21 de octubre.
 
 ### Bloque C — Integración, despliegue y cierre (6 sesiones · 4-nov a 25-nov)
 
 | # | Fecha | Clase | Tema |
 |---|---|---|---|
 | — | ~~lun 2-nov~~ | — | *Festivo — Todos los Santos* |
-| 21 | mié 4-nov | Semana 15 | **Puesta en marcha en un teléfono real** *(requisito explícito del temario)* |
-| 22 | lun 9-nov | Semana 16 | **Pruebas**: de la app y de contrato contra la API |
-| 23 | **mié 11-nov** | Semana 16 | 🎯 **E4 — App en teléfono, end-to-end** (20 %) |
+| 20 | mié 4-nov | Semana 15 | **Puesta en marcha en un teléfono real** *(requisito explícito del temario)* |
+| 21 | lun 9-nov | Semana 16 | **Pruebas**: de la app y de contrato contra la API |
+| 22 | **mié 11-nov** | Semana 16 | 🎯 **E4 — App en teléfono, end-to-end** (20 %) |
 | — | ~~lun 16-nov~~ | — | *Festivo — Independencia de Cartagena* |
-| 24 | mié 18-nov | Semana 17 | **Despliegue** de la plataforma completa · retrospectiva técnica del curso |
-| 25 | lun 23-nov | Semana 17 | Preparación de la sustentación final |
-| 26 | **mié 25-nov** | Semana 17 | 🎯 **E5 — SUSTENTACIÓN FINAL** (20 %) |
+| 23 | mié 18-nov | Semana 17 | **Despliegue** de la plataforma completa · retrospectiva técnica del curso |
+| 24 | lun 23-nov | Semana 17 | Preparación de la sustentación final |
+| 25 | **mié 25-nov** | Semana 17 | 🎯 **E5 — SUSTENTACIÓN FINAL** (20 %) |
 
 ---
 
