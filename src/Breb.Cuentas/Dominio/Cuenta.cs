@@ -72,4 +72,36 @@ public class Cuenta
         SaldoDisponible += retencion.MontoUVB;
         return true;
     }
+
+    /// <summary>
+    /// LA LIQUIDACIÓN: el otro final posible, el del camino feliz (Issue #46).
+    ///
+    /// El banco destino acreditó el abono, así que el dinero salió de verdad.
+    /// Baja el retenido SIN devolver nada al disponible: eso es exactamente lo
+    /// que significa que el dinero se fue.
+    ///
+    /// POR QUÉ NO EXISTÍA ANTES, Y QUÉ SE ROMPÍA:
+    /// Hasta ahora el camino feliz no tocaba la cuenta. El SaldoRetenido se
+    /// quedaba arriba para siempre y la retención viva para siempre, así que
+    /// una transferencia exitosa se veía igual que una averiada. Con el sistema
+    /// funcionando nadie lo notaba, porque el laboratorio se reiniciaba entre
+    /// demos; pero sin esta distinción no se puede construir ninguna reparación
+    /// automática, porque no hay forma de saber qué reparar.
+    ///
+    /// Con esto, el invariante del agregado vuelve a ser verdad:
+    ///     SaldoRetenido == suma de los montos de las retenciones PENDIENTES.
+    ///
+    /// Devuelve false si ya estaba liquidada (aviso duplicado).
+    /// </summary>
+    public bool LiquidarRetencion(Retencion retencion)
+    {
+        if (retencion.CuentaId != Id)
+            throw new InvalidOperationException(
+                "Esa retención no pertenece a esta cuenta.");
+
+        if (!retencion.Liquidar()) return false;   // ya estaba liquidada
+
+        SaldoRetenido -= retencion.MontoUVB;
+        return true;
+    }
 }
