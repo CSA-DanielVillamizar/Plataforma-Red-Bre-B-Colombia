@@ -100,7 +100,36 @@ INF Request finished HTTP/1.0 GET http://10.0.2.2/swagger/index.html - 200 null 
 
 ---
 
-## 4. Lo que queda abierto
+## 4. La cuarta trampa: el navegador miente
+
+**Encontrada en la revisión del PR #53, no en las pruebas.** Vale la pena dejarlo escrito tal cual, porque es un fallo de método.
+
+La verificación de la §3 se hizo **con el navegador del emulador**, y de ahí se concluyó que la app podría alcanzar la API. **Esa conclusión no se sigue.**
+
+Desde API 28, Android rechaza el tráfico HTTP en claro **para las aplicaciones**. El navegador tiene su propia política de red y no está sujeto a la de la app. Nuestra API de laboratorio vive en `http://10.0.2.2:5080`, sin TLS, de modo que el `HttpClient` de `Breb.App` habría fallado aunque:
+
+- el permiso `INTERNET` estuviera concedido (lo está, por plantilla),
+- y el Swagger abriera perfectamente en Chrome dentro del emulador (abría).
+
+Es decir: la prueba que se hizo **no probaba lo que se creía que probaba**. El síntoma habría aparecido en la Semana 12, al escribir el primer `HttpClient`, y habría costado una sesión entera.
+
+**Corrección aplicada** en `Platforms/Android/MainApplication.cs`:
+
+```csharp
+#if DEBUG
+[Application(UsesCleartextTraffic = true)]
+#else
+[Application]
+#endif
+```
+
+Solo en `Debug`: una app que acepte HTTP en claro en `Release` expondría tokens y saldos en texto plano.
+
+> **La lección de método**, que es la misma de la Semana 9: la prueba tiene que ejercitar **el mismo camino** que el código real. Probar con otro cliente —un navegador, un `curl`, un `nc`— demuestra que la red funciona, no que la aplicación funcione. Pendiente de verificar con un `HttpClient` real en la Semana 12.
+
+---
+
+## 5. Lo que queda abierto
 
 - **Los tiempos son de una sola máquina.** La actividad de la Semana 11 (#52) pide a los squads medir en las suyas, para saber si 300 s es representativo o si el rango es amplio.
 - **El consumo de disco se midió una vez.** Falta saber cuánto crece con varios proyectos en paralelo.

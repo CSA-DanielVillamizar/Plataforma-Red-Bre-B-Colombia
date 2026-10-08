@@ -4,10 +4,16 @@ Proyecto .NET MAUI creado en la **Clase 14 (Semana 11)**. Es el esqueleto de lo 
 
 ---
 
-## ⚠️ Antes de compilar: muévalo a una ruta corta
+El proyecto está en la solución `src/Breb.Platform.slnx`, junto a `Breb.Cuentas`.
+
+---
+
+## ⚠️ Antes de compilar: clone el repositorio en una ruta corta
 
 ```bash
-dotnet build C:\breb\Breb.App -f net10.0-android
+git clone https://github.com/CSA-DanielVillamizar/Plataforma-Red-Bre-B-Colombia.git C:\breb
+cd C:\breb
+dotnet build .\src\Breb.App\Breb.App.csproj -f net10.0-android
 ```
 
 **No lo compile desde una ruta larga.** `aapt2`, el compilador de recursos de Android, falla con el límite de longitud de ruta de Windows:
@@ -56,11 +62,31 @@ Dentro del emulador, `localhost` es el emulador. La máquina anfitriona está en
 
 > En un **teléfono real** `10.0.2.2` no sirve: ahí se usa la IP del computador en la red WiFi.
 
-Comprobación rápida:
+Comprobación rápida **del camino de red** (no de la app):
 
 ```bash
 adb shell am start -a android.intent.action.VIEW -d "http://10.0.2.2:5080/swagger/index.html"
 ```
+
+---
+
+## ⚠️ Y una cuarta trampa: Android bloquea el HTTP sin cifrar
+
+**Que la URL abra en el navegador del emulador NO significa que la app pueda alcanzarla.**
+
+Desde API 28, Android rechaza el tráfico HTTP en claro para las aplicaciones. Nuestra API de laboratorio vive en `http://10.0.2.2:5080` —sin TLS—, así que el `HttpClient` de la app fallaría **aunque el permiso `INTERNET` esté concedido y aunque el navegador cargue la página sin problema**. El navegador tiene su propia política de red; la de la aplicación es independiente.
+
+Ya está resuelto en `Platforms/Android/MainApplication.cs`:
+
+```csharp
+#if DEBUG
+[Application(UsesCleartextTraffic = true)]
+#else
+[Application]
+#endif
+```
+
+**Solo en Debug**, a propósito: una entrega que acepte HTTP en claro en Release estaría exponiendo tokens y saldos en texto plano.
 
 ---
 
