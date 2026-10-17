@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:Class="Breb.App.Views.SaldoPage"
+             x:DataType="vm:SaldoViewModel"
+             Title="Saldo">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="Consulta de saldo"
+                   Style="{StaticResource Headline}" />
+
+            <Entry Placeholder="Id de cuenta (GUID)"
+                   Text="{Binding CuentaId}" />
+
+            <Button Text="Consultar saldo"
+                    Command="{Binding ConsultarCommand}" />
+
+            <Label Text="Disponible" FontAttributes="Bold" />
+            <Label Text="{Binding SaldoDisponible}" FontSize="24" />
+
+            <Label Text="Retenido" FontAttributes="Bold" />
+            <Label Text="{Binding SaldoRetenido}" FontSize="24" />
+
+            <Button Text="Ir a transferencia"
+                    Command="{Binding IrATransferenciaCommand}" />
+
+            <ActivityIndicator IsRunning="{Binding EstaCargando}"
+                               IsVisible="{Binding EstaCargando}" />
+
+            <Label Text="{Binding MensajeError}"
+                   TextColor="DarkRed" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:Class="Breb.App.Views.TransferenciaPage"
+             x:DataType="vm:TransferenciaViewModel"
+             Title="Transferencia">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="Disparar retención"
+                   Style="{StaticResource Headline}" />
+
+            <Entry Placeholder="Id de cuenta (GUID)"
+                   Text="{Binding CuentaId}" />
+
+            <Entry Placeholder="Monto UVB"
+                   Text="{Binding MontoUVB}"
+                   Keyboard="Numeric" />
+
+            <Button Text="Transferir"
+                    Command="{Binding TransferirCommand}" />
+
+            <Button Text="Volver"
+                    Command="{Binding VolverCommand}" />
+
+            <ActivityIndicator IsRunning="{Binding EstaCargando}"
+                               IsVisible="{Binding EstaCargando}" />
+
+            <Label Text="{Binding Resultado}" />
+            <Label Text="{Binding MensajeError}"
+                   TextColor="DarkRed" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
