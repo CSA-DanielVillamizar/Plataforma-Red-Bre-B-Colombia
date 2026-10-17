@@ -71,3 +71,16 @@ services:
       - "4327:4317"      # OTLP gRPC: por aquí llegan las trazas
       - "4328:4318"      # OTLP HTTP
       - "16687:16686"    # UI de Jaeger
+
+  # Caché para resolución de llaves (DICE). Puerto 6380 en el HOST para no
+  # chocar con un Redis local en 6379 — mismo criterio que 5433 / 5673.
+  redis:
+    image: redis:7-alpine
+    container_name: breb-redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
