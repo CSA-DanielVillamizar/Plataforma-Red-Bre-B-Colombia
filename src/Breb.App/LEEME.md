@@ -1,6 +1,25 @@
 # Breb.App — la aplicación móvil de la Red Bre-B
 
-Proyecto .NET MAUI creado en la **Clase 14 (Semana 11)**. Es el esqueleto de lo que se entrega en el **Evaluable 3** (#28) el 21 de octubre.
+Proyecto .NET MAUI creado en la **Clase 14 (Semana 11)** y dotado de arquitectura en la **Clase 15**. Es la referencia de lo que se entrega en el **Evaluable 3** (#28) el 21 de octubre.
+
+Hoy la app hace una cosa completa: pide un token a `/token` con usuario y clave, consulta `/cuentas/{id}/saldo` con ese token en el encabezado `Bearer`, y muestra el saldo en pantalla. Nadie escribe `saldoLabel.Text = ...` en ninguna parte: eso lo hace el binding.
+
+| Pieza | Archivo | Responsabilidad |
+|---|---|---|
+| Vista | `MainPage.xaml` | Solo describe qué se ve y a qué se enlaza |
+| ViewModel | `ViewModels/SaldoViewModel.cs` | Propiedades observables, comandos y manejo de error |
+| Servicio | `Servicios/ClienteBrebApi.cs` | Único lugar que conoce rutas, JSON y el token |
+| Contratos | `Modelos/Contratos.cs` | Los DTOs de la API, copiados a mano |
+| Composición | `MauiProgram.cs` | Registra el `HttpClient` y resuelve las dependencias |
+
+Dos paquetes que **no** vienen con la plantilla y hacen falta:
+
+```bash
+dotnet add package CommunityToolkit.Mvvm
+dotnet add package Microsoft.Extensions.Http
+```
+
+`AddHttpClient` llega gratis en una API ASP.NET Core, pero **no** en MAUI. Sin `Microsoft.Extensions.Http` el build falla con `CS1061: IServiceCollection does not contain a definition for 'AddHttpClient'`, y falla al final, después de restaurar y de compilar los recursos de Android.
 
 ---
 
@@ -87,6 +106,38 @@ Ya está resuelto en `Platforms/Android/MainApplication.cs`:
 ```
 
 **Solo en Debug**, a propósito: una entrega que acepte HTTP en claro en Release estaría exponiendo tokens y saldos en texto plano.
+
+---
+
+## ⚠️ La quinta trampa: el APK de Debug no se puede instalar a mano
+
+Esta es la que más duele, porque la app **compila sin un solo error** y aun así no abre.
+
+Quien tome el `.apk` de `bin/Debug/net10.0-android/` y lo instale con `adb install` —o lo pase a un teléfono y lo abra— ve que la aplicación se cierra de inmediato. En pantalla no hay información: solo "la aplicación se detuvo". En `adb logcat` sí está la razón:
+
+```
+F monodroid: No assemblies found in
+    '/data/user/0/com.companyname.breb.app/files/.__override__/x86_64'
+    or '<unavailable>'. Assuming this is part of Fast Deployment. Exiting...
+F monodroid: Abort at monodroid-glue.cc:757
+F libc    : Fatal signal 6 (SIGABRT)
+```
+
+**Por qué.** En Debug, .NET para Android usa *Fast Deployment*: para que el ciclo de compilar-y-probar sea corto, los ensamblados .NET **no se empaquetan dentro del APK**. Los copia aparte el propio `dotnet build -t:Run`, a una carpeta privada de la aplicación. El APK que queda en `bin/` está incompleto a propósito, y por sí solo no arranca.
+
+**Las dos salidas:**
+
+```bash
+# A) Desplegar con la herramienta, que además empuja los ensamblados
+dotnet build -f net10.0-android -t:Run
+
+# B) Generar un APK que se baste a sí mismo (para repartir o instalar a mano)
+dotnet build -f net10.0-android -c Debug -p:EmbedAssembliesIntoApk=true
+```
+
+Para el **Evaluable 3**, si el squad entrega un `.apk`, tiene que ser uno de los de la opción B —o un build de `Release`, que ya embebe los ensamblados—. Un APK de Debug suelto se ve bien, pesa lo mismo, y no abre en la máquina de nadie más.
+
+> Un síntoma que despista: cuando la app aborta así en bucle, Android muestra **"Process system isn't responding"**. Parece que el emulador está lento o dañado; lo que pasa es que el sistema está reiniciando el proceso una y otra vez. El diálogo no habla de la app, pero la causa es la app.
 
 ---
 

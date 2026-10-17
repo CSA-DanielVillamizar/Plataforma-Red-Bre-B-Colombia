@@ -1,23 +1,13 @@
-﻿namespace Breb.App;
+﻿using Breb.App.ViewModels;
 
+namespace Breb.App;
+
+// Sin lógica aquí: el ViewModel llega por DI y el binding hace todo el trabajo.
 public partial class MainPage : ContentPage
 {
-	int count = 0;
-
-	public MainPage()
+	public MainPage(SaldoViewModel viewModel)
 	{
 		InitializeComponent();
-	}
-
-	private void OnCounterClicked(object? sender, EventArgs e)
-	{
-		count++;
-
-		if (count == 1)
-			CounterBtn.Text = $"Clicked {count} time";
-		else
-			CounterBtn.Text = $"Clicked {count} times";
-
-		SemanticScreenReader.Announce(CounterBtn.Text);
+		BindingContext = viewModel;
 	}
 }
