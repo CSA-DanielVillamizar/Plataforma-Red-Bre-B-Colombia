@@ -46,6 +46,11 @@ public sealed class ClienteBrebApi(HttpClient http)
     ///   · no hay clave de idempotencia. El servidor inventa el
     ///     transferenciaId. Llamar dos veces aparta el dinero dos veces.
     ///     La idempotencia desde el cliente es de la semana 14.
+    ///   · no existe otro endpoint que "transfiera con destino". Este es el
+    ///     que publica FondosRetenidos y nace la saga. El abono lo confirma
+    ///     después POST /transferencias/{id}/confirmar-abono, y solo con el
+    ///     rol banco. Sin esa confirmación, a los 15 s la saga compensa y
+    ///     el dinero vuelve. El conciliador de 5 minutos no interviene ahí.
     /// </summary>
     public async Task<RespuestaRetencion> RetenerAsync(Guid cuentaId, decimal montoUvb, string token)
     {

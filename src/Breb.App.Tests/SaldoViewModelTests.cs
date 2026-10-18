@@ -54,7 +54,7 @@ public class SaldoViewModelTests
 
         Assert.Equal("ok", vm.Tono);
         Assert.Contains("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", vm.ResultadoTransferencia);
-        Assert.Contains("refleja la transferencia", vm.Estado);
+        Assert.Contains("plata quedó apartada", vm.Estado);
         Assert.Equal(Uvb(4990m), vm.SaldoTexto);
         Assert.Equal(Uvb(10m), vm.SaldoRetenidoTexto);
         Assert.False(vm.Cargando);

@@ -89,7 +89,7 @@ La cuenta que muestra la app es siempre la misma:
 
 `11111111-1111-1111-1111-111111111111`
 
-Empieza con 5.000 UVB disponibles y 0 retenidos, si acaba de cargar `scripts/cuentas-base.sql`. Cada transferencia exitosa **baja** lo disponible y **sube** lo retenido: la plata queda apartada a la espera del banco destino. Eso es lo que la pantalla tiene que mostrar.
+Empieza con 5.000 UVB disponibles y 0 retenidos, si acaba de cargar `scripts/cuentas-base.sql`. Al transferir, lo disponible **baja** y lo retenido **sube**: la plata queda apartada. Unos 15 segundos después, si nadie confirma, **vuelve sola**. El detalle está más abajo, en «Qué pasa con el dinero apartado».
 
 La app abre con `luis.consulta` y un monto de 10.
 
@@ -121,10 +121,33 @@ Para mostrar un rechazo: cambie la clave por cualquier otra y pulse **Consultar 
 1. Cambie el usuario a `ana.operadora` y la clave a `Operadora-2026`.
 2. Pulse **Consultar saldo**. El texto debe decir `rol operador`. Anote el saldo disponible.
 3. Deje el monto en `10` y pulse **Transferir**.
-4. La pantalla confirma con la frase **Transferencia aceptada**, el monto y un número de transferencia.
-5. El saldo disponible baja 10 y el saldo retenido sube 10.
+4. La pantalla confirma con la frase **Transferencia aceptada**, el monto y un número de transferencia. También avisa que, si el banco no confirma, el dinero vuelve en unos 15 segundos.
+5. En ese momento el saldo disponible baja 10 y el saldo retenido sube 10. Muéstrelo enseguida: es la prueba de que la transferencia se disparó.
 
-Eso es la transferencia: la app llamó al endpoint real de la API (`/cuentas/{id}/retener`) con el token de la operadora. No hay una clave extra que enviar: la API inventa el número de la transferencia. Pulsar dos veces aparta el dinero dos veces; es el comportamiento de hoy.
+Eso es el disparo: la app llamó a la operación real de la API que aparta el dinero (`/cuentas/{id}/retener`) con el token de la operadora. No hay otra operación en el repositorio que inicie la transferencia, ni una que reciba una cuenta destino. La API inventa el número. Pulsar dos veces aparta el dinero dos veces.
+
+No espere a que el retenido se quede así. Siga leyendo antes de refrescar.
+
+### Qué pasa con el dinero apartado
+
+La app no manda la plata a otra cuenta. En este laboratorio no hay una cuenta destino: el otro lado es el banco de afuera.
+
+Lo que hace **Transferir** es apartar el monto de la cuenta de la demo y poner en marcha el reloj de esa transferencia. La pantalla lo muestra al momento: disponible más bajo, retenido más alto.
+
+El banco de afuera tiene su propio usuario, `core-bancario`. Confirmar que el dinero sí llegó es trabajo de ese usuario, no de Ana. La app no entra con esa clave a propósito: si la operadora pudiera dar por hecha la transferencia, podría completar una que el otro banco nunca recibió.
+
+Si pasan unos **15 segundos** y nadie confirma, el sistema devuelve la plata solo. Lo retenido baja, lo disponible sube, y en la base la fila queda marcada como devuelta, no como enviada. En la ventana de la API el aviso dice `Timeout de confirmacion (15s)` y después aparece el `UPDATE` de `Liberada`. Ese reloj es la regla del curso: «si no llega confirmación en 15 segundos, se devuelve».
+
+No es el proceso que revisa retenciones viejas. Ese otro proceso (el conciliador) solo toca plata que lleva **más de 5 minutos** apartada y cuya transferencia ni siquiera llegó a nacer. Una fila de 15 o 20 segundos no le corresponde, aunque el `UPDATE` de `Liberada` se parezca. Los 17 segundos que se ven entre la hora de creación y la hora de devolución son el reloj de 15 segundos más un par de segundos de mensajería.
+
+Para mostrarlo en la sustentación:
+
+1. Justo después de transferir, enseñe el retenido arriba.
+2. Espere unos 20 segundos.
+3. Pulse **Consultar saldo** otra vez, con `ana.operadora`.
+4. El dinero volvió. Diga la frase: el banco no confirmó, así que el sistema lo regresó. No se perdió.
+
+Si quiere el caso en el que el dinero **sí se va y no vuelve**, eso lo hace el banco, no la pantalla del celular. Desde la carpeta del repositorio: `./demo-clase3.sh feliz`. Ese recorrido aparta y, a los 5 segundos, confirma con `core-bancario`. Ahí el retenido vuelve a cero y el disponible no recupera ese monto.
 
 Ahora el caso en el que **no** deja:
 

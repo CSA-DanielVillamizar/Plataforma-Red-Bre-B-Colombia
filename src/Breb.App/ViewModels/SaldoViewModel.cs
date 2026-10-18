@@ -108,15 +108,18 @@ public partial class SaldoViewModel : ObservableObject
         Estado = "Transfiriendo…";
         var retencion = await _api.RetenerAsync(CuentaDemo, monto, _token);
 
+        // /retener aparta el dinero y arranca la saga. El banco destino tiene
+        // 15 segundos para confirmar; si no lo hace, la saga devuelve la plata.
+        // La app no confirma: ese paso es del rol "banco", no del operador.
         ResultadoTransferencia =
-            $"Transferencia aceptada. Se apartaron {FormatoUvb(retencion.MontoUVB)}. Número: {retencion.TransferenciaId}.";
+            $"Transferencia aceptada. Se apartaron {FormatoUvb(retencion.MontoUVB)}. Número: {retencion.TransferenciaId}. Si el banco destino no confirma, este dinero vuelve solo en unos 15 segundos.";
 
         Estado = "Actualizando saldo…";
         try
         {
             await MostrarSaldoAsync();
             Tono = "ok";
-            Estado = $"Listo · rol {_rol} · el saldo ya refleja la transferencia.";
+            Estado = $"Listo · rol {_rol} · la plata quedó apartada. Aún no salió de la cuenta.";
         }
         catch (Exception ex) when (ex is ExcepcionDeApi or HttpRequestException or TaskCanceledException)
         {
