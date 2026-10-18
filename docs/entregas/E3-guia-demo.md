@@ -136,7 +136,7 @@ Esta pantalla no vuelve a pedir usuario ni clave. Usa el token que guardó Entra
 `luis.consulta` no puede transferir. Primero muéstrelo, y después entre con la operadora.
 
 1. En Saldo, pulse **Ir a transferir**. El monto puede quedarse en `10`. Pulse **Transferir**.
-2. En rojo, la pantalla explica que hace falta `ana.operadora`. La API contestó "prohibido" (403): sabe quién es, y no lo deja mover plata. La sesión sigue abierta. Volver a entrar como `luis.consulta` no lo arregla.
+2. En rojo, el texto es exactamente **No tienes permisos para transferir, hace falta el rol operador**. Nada más: ni código HTTP ni el nombre del usuario. La API contestó "prohibido" (403): sabe quién es, y no lo deja mover plata. La sesión sigue abierta. Volver a entrar como `luis.consulta` no lo arregla.
 3. Pulse **Cerrar sesión**. Vuelve a Entrar y el token queda borrado. El atrás del teléfono no regresa a Saldo ni a Transferir.
 4. Ponga `ana.operadora` / `Operadora-2026` y pulse **Entrar**. La app abre Saldo. Arriba se lee el usuario y el rol `operador`.
 5. Pulse **Consultar saldo** y anote el disponible.

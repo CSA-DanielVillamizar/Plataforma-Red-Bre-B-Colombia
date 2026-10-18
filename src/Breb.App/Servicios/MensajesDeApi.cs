@@ -10,7 +10,7 @@ public static class MensajesDeApi
         401 =>
             "La sesión venció o el token ya no es válido. Vaya a Entrar e inicie sesión otra vez.",
         403 when ex.Operacion == "transferencia" =>
-            "No tiene permiso para transferir. Hace falta el rol operador: entre con ana.operadora. luis.consulta solo puede ver el saldo.",
+            "No tienes permisos para transferir, hace falta el rol operador",
         403 =>
             "No tiene permiso para esta operación.",
         404 =>

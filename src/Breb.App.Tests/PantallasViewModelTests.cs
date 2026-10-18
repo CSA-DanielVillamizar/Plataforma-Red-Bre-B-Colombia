@@ -162,8 +162,9 @@ public class PantallasViewModelTests
 
         await vm.TransferirCommand.ExecuteAsync(null);
 
-        Assert.Contains("ana.operadora", vm.Estado);
-        Assert.Contains("permiso", vm.Estado);
+        Assert.Equal(
+            "No tienes permisos para transferir, hace falta el rol operador",
+            vm.Estado);
         Assert.Equal(string.Empty, vm.ResultadoTransferencia);
         Assert.NotNull(await almacen.LeerAsync());
     }
