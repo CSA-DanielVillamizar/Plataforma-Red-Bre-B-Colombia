@@ -61,7 +61,7 @@
                 </Label.Triggers>
             </Label>
 
-            <Button Text="Ver saldo"
+            <Button Text="Volver a saldo"
                     Command="{Binding IrASaldoCommand}"
                     HorizontalOptions="Fill"/>
 

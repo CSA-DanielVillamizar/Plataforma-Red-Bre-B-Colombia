@@ -10,6 +10,7 @@ public partial class LoginViewModel : ViewModelBase
     private readonly ClienteBrebApi _api;
     private readonly IAlmacenSesion _almacen;
     private readonly INavegacion _nav;
+    private bool _revisoArranque;
 
     public LoginViewModel(ClienteBrebApi api, IAlmacenSesion almacen, INavegacion nav)
     {
@@ -28,6 +29,38 @@ public partial class LoginViewModel : ViewModelBase
     private string clave = string.Empty;
 
     protected override void AlCambiarCargando() => EntrarCommand.NotifyCanExecuteChanged();
+
+    /// <summary>
+    /// Solo al abrir. Si ya hay un JWT vigente, entra a Saldo. Si está vencido
+    /// o no se puede leer, se queda en Entrar. Una segunda vez (el atrás
+    /// desde Saldo) no vuelve a saltar.
+    /// </summary>
+    [RelayCommand]
+    private async Task PrepararAsync()
+    {
+        if (_revisoArranque) return;
+        _revisoArranque = true;
+
+        try
+        {
+            var sesion = await _almacen.LeerAsync();
+            if (sesion is null) return;
+
+            if (!VigenciaDelToken.SigueVigente(sesion.Token, DateTimeOffset.UtcNow))
+            {
+                await _almacen.BorrarAsync();
+                return;
+            }
+
+            Tono = "ok";
+            Estado = $"Sesión guardada · rol {sesion.Rol}.";
+            await _nav.IrAsync(Rutas.Saldo);
+        }
+        catch (ExcepcionAlmacenSeguro ex)
+        {
+            MarcarError(ex.Message);
+        }
+    }
 
     [RelayCommand(CanExecute = nameof(NoEstaCargando))]
     private Task EntrarAsync() => EjecutarAsync(async () =>

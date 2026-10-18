@@ -9,7 +9,7 @@ La guía para la sustentación del Evaluable 3 está en [`docs/entregas/E3-guia-
 | Pieza | Archivo | Responsabilidad |
 |---|---|---|
 | Vistas | `Vistas/LoginPage.xaml`, `SaldoPage.xaml`, `TransferenciaPage.xaml` | Solo describen qué se ve y a qué se enlaza |
-| Navegación | `AppShell.xaml` | Las tres pestañas: Entrar, Saldo, Transferir |
+| Navegación | `AppShell.xaml` | Abre en Entrar. Saldo y Transferir se empujan con botones, sin pestañas |
 | ViewModels | `ViewModels/LoginViewModel.cs`, `SaldoViewModel.cs`, `TransferenciaViewModel.cs` | Propiedades observables, comandos y manejo de error |
 | HTTP | `Servicios/ClienteBrebApi.cs` | Único lugar que conoce rutas, JSON y el encabezado Bearer |
 | Token | `Servicios/AlmacenSesion.cs`, `BovedaSecureStorage.cs` | JWT en SecureStorage, no en un campo |

@@ -6,16 +6,8 @@
     FlyoutBehavior="Disabled"
     Title="Bre-B">
 
-    <TabBar>
-        <Tab Title="Entrar">
-            <ShellContent x:Name="ContenidoLogin" Route="login" Title="Entrar" />
-        </Tab>
-        <Tab Title="Saldo">
-            <ShellContent x:Name="ContenidoSaldo" Route="saldo" Title="Saldo" />
-        </Tab>
-        <Tab Title="Transferir">
-            <ShellContent x:Name="ContenidoTransferencia" Route="transferencia" Title="Transferir" />
-        </Tab>
-    </TabBar>
+    <!-- Una sola pantalla raíz. Saldo y Transferir se empujan después,
+         no son pestañas: sin token no se puede saltar a ellas. -->
+    <ShellContent x:Name="ContenidoLogin" Route="login" Title="Entrar" />
 
 </Shell>

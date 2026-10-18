@@ -7,6 +7,7 @@ internal sealed class BovedaEnMemoria : IBovedaSegura
 {
     public Dictionary<string, string> Datos { get; } = new();
     public string? FallarAlGuardarClave { get; set; }
+    public Exception? FallarAlLeer { get; set; }
 
     public Task GuardarAsync(string clave, string valor)
     {
@@ -17,8 +18,11 @@ internal sealed class BovedaEnMemoria : IBovedaSegura
         return Task.CompletedTask;
     }
 
-    public Task<string?> LeerAsync(string clave) =>
-        Task.FromResult(Datos.TryGetValue(clave, out var valor) ? valor : null);
+    public Task<string?> LeerAsync(string clave)
+    {
+        if (FallarAlLeer is not null) throw FallarAlLeer;
+        return Task.FromResult(Datos.TryGetValue(clave, out var valor) ? valor : null);
+    }
 
     public Task BorrarAsync(string clave)
     {

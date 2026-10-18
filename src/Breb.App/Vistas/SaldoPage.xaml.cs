@@ -16,6 +16,6 @@ public partial class SaldoPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        _ = _viewModel.PrepararCommand.ExecuteAsync(null);
+        Dispatcher.DispatchAsync(() => _viewModel.PrepararCommand.ExecuteAsync(null));
     }
 }

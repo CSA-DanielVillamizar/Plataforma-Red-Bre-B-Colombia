@@ -26,6 +26,8 @@
     <Compile Include="..\Breb.App\Servicios\IAlmacenSesion.cs" Link="App\IAlmacenSesion.cs" />
     <Compile Include="..\Breb.App\Servicios\AlmacenSesion.cs" Link="App\AlmacenSesion.cs" />
     <Compile Include="..\Breb.App\Servicios\INavegacion.cs" Link="App\INavegacion.cs" />
+    <Compile Include="..\Breb.App\Servicios\VigenciaDelToken.cs" Link="App\VigenciaDelToken.cs" />
+    <Compile Include="..\Breb.App\Servicios\GuardiaDeSesion.cs" Link="App\GuardiaDeSesion.cs" />
     <Compile Include="..\Breb.App\Servicios\MensajesDeApi.cs" Link="App\MensajesDeApi.cs" />
     <Compile Include="..\Breb.App\ViewModels\ViewModelBase.cs" Link="App\ViewModelBase.cs" />
     <Compile Include="..\Breb.App\ViewModels\LoginViewModel.cs" Link="App\LoginViewModel.cs" />

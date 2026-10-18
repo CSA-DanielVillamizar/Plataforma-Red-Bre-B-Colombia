@@ -33,5 +33,5 @@ public static class MensajesDeApi
         "La API no respondió a tiempo (más de 10 segundos). Compruebe que sigue encendida e intente otra vez.";
 
     public const string SinSesion =
-        "No hay sesión. Vaya a la pestaña Entrar.";
+        "No hay sesión. Vuelva a Entrar.";
 }

@@ -2,7 +2,7 @@
 
 Esta guía es para el día de la sustentación (miércoles 21 de octubre de 2026). Explica cómo encender todo, con qué usuarios probar y qué tocar en la pantalla para cubrir cada punto de la nota.
 
-La aplicación es la del celular (`src/Breb.App`). Habla con la API de cuentas (`src/Breb.Cuentas`). Tiene tres pantallas, ni una más: **Entrar**, **Saldo** y **Transferir**. Son las tres pestañas de abajo.
+La aplicación es la del celular (`src/Breb.App`). Habla con la API de cuentas (`src/Breb.Cuentas`). Tiene tres pantallas, ni una más: **Entrar**, **Saldo** y **Transferir**. No hay barra de pestañas. Al abrir se ve solo Entrar. Saldo y Transferir aparecen con los botones, después de iniciar sesión.
 
 ---
 
@@ -91,19 +91,23 @@ La cuenta que muestran Saldo y Transferir es siempre la misma:
 
 Empieza con 5.000 UVB disponibles y 0 retenidos, si acaba de cargar `scripts/cuentas-base.sql`. Al transferir, lo disponible **baja** y lo retenido **sube**: la plata queda apartada. Unos 15 segundos después, si nadie confirma, **vuelve sola**. El detalle está más abajo, en «Qué pasa con el dinero apartado».
 
-La pestaña Entrar abre con `luis.consulta` / `Consulta-2026`. La pestaña Transferir abre con un monto de 10.
+Entrar abre con `luis.consulta` / `Consulta-2026`. Transferir abre con un monto de 10.
 
 El token no se queda en la pantalla. Al pulsar **Entrar**, la app lo guarda en el almacén seguro del teléfono (SecureStorage). Saldo y Transferir lo leen de ahí. La clave no se guarda.
+
+Si al abrir la app el token guardado todavía no venció (dura 15 minutos), entra sola a Saldo. Si venció, o no se puede leer, se queda en Entrar y borra lo que había. Si el almacén del teléfono falla, muestra el error y no se cierra.
+
+No se puede saltar a Saldo o a Transferir sin sesión: esas pantallas no están en una barra. Si se llega sin token, la app vuelve a Entrar.
 
 ---
 
 ## 4. Recorrido de la demo
 
-Hable mientras toca. Cada bloque de abajo corresponde a un punto de la rúbrica. Abajo hay tres pestañas: **Entrar**, **Saldo** y **Transferir**.
+Hable mientras toca. Cada bloque de abajo corresponde a un punto de la rúbrica. El camino es Entrar → Saldo → Transferir, con botones. No hay pestañas abajo.
 
 ### La app compila y corre (20 %)
 
-Muestre el emulador con la app abierta y las tres pestañas. La primera dice **Bre-B · Entrar**.
+Muestre el emulador con la app abierta. La única pantalla es **Bre-B · Entrar**. No se ve una barra Entrar / Saldo / Transferir.
 
 Si le piden el proyecto: se compiló con el comando del paso 5 y quedó instalada en el emulador.
 
@@ -112,11 +116,11 @@ Si le piden el proyecto: se compiló con el comando del paso 5 y quedó instalad
 1. Deje `luis.consulta` / `Consulta-2026` en **Entrar**.
 2. Pulse **Entrar**.
 3. Aparece un indicador de espera y el texto "Pidiendo token…".
-4. Al terminar, el texto verde dice `Sesión iniciada · rol consulta` y la app pasa sola a la pestaña **Saldo**.
+4. Al terminar, el texto verde dice `Sesión iniciada · rol consulta` y la app abre **Saldo**.
 
 Ese rol sale del token que acaba de emitir la API. La app no se lo inventa. El token quedó en el almacén seguro, no escrito en un campo de la pantalla.
 
-Para mostrar un rechazo: vuelva a **Entrar**, cambie la clave por cualquier otra y pulse **Entrar**. En rojo: **Usuario o clave incorrectos.** No cambia de pestaña y no guarda nada.
+Para mostrar un rechazo hace falta estar en Entrar. Desde Saldo, pulse **Cerrar sesión** (vuelve a Entrar y borra el token; el botón atrás de Android no regresa a Saldo). Cambie la clave por cualquier otra y pulse **Entrar**. En rojo: **Usuario o clave incorrectos.** Se queda en Entrar y no guarda nada.
 
 ### Consulta de saldo (parte del 25 %)
 
@@ -131,13 +135,14 @@ Esta pantalla no vuelve a pedir usuario ni clave. Usa el token que guardó Entra
 
 `luis.consulta` no puede transferir. Primero muéstrelo, y después entre con la operadora.
 
-1. Vaya a **Transferir**. El monto puede quedarse en `10`. Pulse **Transferir**.
+1. En Saldo, pulse **Ir a transferir**. El monto puede quedarse en `10`. Pulse **Transferir**.
 2. En rojo, la pantalla explica que hace falta `ana.operadora`. La API contestó "prohibido" (403): sabe quién es, y no lo deja mover plata. La sesión sigue abierta. Volver a entrar como `luis.consulta` no lo arregla.
-3. Vaya a **Entrar**. Cambie el usuario a `ana.operadora` y la clave a `Operadora-2026`. Pulse **Entrar**. El token nuevo reemplaza al anterior. La app vuelve a **Saldo** y el texto dice `rol operador`.
-4. En **Saldo**, pulse **Consultar saldo** y anote el disponible.
-5. Vaya a **Transferir**. Deje el monto en `10` y pulse **Transferir**.
-6. La pantalla confirma con la frase **Transferencia aceptada**, el monto y un número de transferencia. También avisa que, si el banco no confirma, el dinero vuelve en unos 15 segundos.
-7. En esa misma pantalla el disponible baja 10 y el retenido sube 10. Muéstrelo enseguida: es la prueba de que la transferencia se disparó.
+3. Pulse **Cerrar sesión**. Vuelve a Entrar y el token queda borrado. El atrás del teléfono no regresa a Saldo ni a Transferir.
+4. Ponga `ana.operadora` / `Operadora-2026` y pulse **Entrar**. La app abre Saldo. Arriba se lee el usuario y el rol `operador`.
+5. Pulse **Consultar saldo** y anote el disponible.
+6. Pulse **Ir a transferir**. Deje el monto en `10` y pulse **Transferir**.
+7. La pantalla confirma con la frase **Transferencia aceptada**, el monto y un número de transferencia. También avisa que, si el banco no confirma, el dinero vuelve en unos 15 segundos.
+8. En esa misma pantalla el disponible baja 10 y el retenido sube 10. Muéstrelo enseguida: es la prueba de que la transferencia se disparó. **Volver a saldo** (o la flecha atrás) regresa a Saldo sin cerrar la sesión.
 
 Eso es el disparo: la app llamó a la operación real de la API que aparta el dinero (`/cuentas/{id}/retener`) con el token de la operadora. No hay otra operación en el repositorio que inicie la transferencia, ni una que reciba una cuenta destino. La API inventa el número. Pulsar dos veces, cuando el botón ya volvió a encenderse, aparta el dinero dos veces. Mientras la llamada va en curso el botón está apagado, así que un doble toque rápido no dispara dos veces.
 
@@ -157,9 +162,9 @@ No es el proceso que revisa retenciones viejas. Ese otro proceso (el conciliador
 
 Para mostrarlo en la sustentación:
 
-1. Justo después de transferir, enseñe el retenido en la pestaña **Transferir** (o en **Saldo**).
+1. Justo después de transferir, enseñe el retenido en **Transferir**.
 2. Espere unos 20 segundos.
-3. En **Saldo**, pulse **Consultar saldo** otra vez. Sigue siendo `ana.operadora`: no hace falta volver a entrar.
+3. Pulse **Volver a saldo** y luego **Consultar saldo**. Sigue siendo `ana.operadora`: no hace falta volver a entrar.
 4. El dinero volvió. Diga la frase: el banco no confirmó, así que el sistema lo regresó. No se perdió.
 
 Si quiere el caso en el que el dinero **sí se va y no vuelve**, eso lo hace el banco, no la pantalla del celular. Desde la carpeta del repositorio: `./demo-clase3.sh feliz`. Ese recorrido aparta y, a los 5 segundos, confirma con `core-bancario`. Ahí el retenido vuelve a cero y el disponible no recupera ese monto.
@@ -172,7 +177,7 @@ Si le piden el código, ábralo y señale sin ejecutar nada en la vista:
 - Cada pantalla tiene su ViewModel: `LoginViewModel`, `SaldoViewModel`, `TransferenciaViewModel`. Ahí están los comandos, el estado de carga y los mensajes.
 - `Servicios/ClienteBrebApi.cs` es el único que conoce las rutas, el JSON y el encabezado Bearer. Se registra en `MauiProgram.cs` y llega al ViewModel por inyección.
 - El token vive en `AlmacenSesion` / `BovedaSecureStorage` (SecureStorage), detrás de una interfaz. No es un campo del ViewModel.
-- `AppShell` arma las tres pestañas. Cambiar de pestaña pasa por `INavegacion`, para poder probarlo sin el celular.
+- `AppShell` abre solo Entrar. Saldo y Transferir se empujan con `INavegacion` (para poder probarlo sin el celular). **Cerrar sesión** usa la ruta `//login`, que vacía la pila.
 
 No hay asignaciones del estilo `etiqueta.Text = ...` en el code-behind.
 
@@ -184,13 +189,13 @@ Haga estos, en el orden que le quede cómodo. En todos, el mensaje queda en la p
 |---|---|
 | Con la API corriendo, monto `999999`, sesión de `ana.operadora`, en **Transferir** pulsar **Transferir** | **No se pudo transferir: Saldo insuficiente para retener.** |
 | Detener la API (Ctrl+C en su ventana) y en **Saldo** pulsar **Consultar saldo** | **No hay conexión con la API…** y menciona `10.0.2.2`. |
-| Volver a encender la API. Entrar con `ana.operadora`. Esperar **más de 15 minutos** y pulsar **Consultar saldo** o **Transferir** | **La sesión venció o el token ya no es válido…** El token se borra. Hay que volver a **Entrar**. |
+| Volver a encender la API. Entrar con `ana.operadora`. Esperar **más de 15 minutos** y pulsar **Consultar saldo** o **Transferir** | **La sesión venció o el token ya no es válido…** El token se borra y la app vuelve a **Entrar**. El atrás no regresa a Saldo. |
 | (Si no alcanza el tiempo de los 15 minutos, diga que el token dura 15 minutos y que ese mensaje ya está cubierto por la prueba automática del ViewModel. No invente que lo vio si no lo vio.) | |
 | Si la API responde con un error interno (500) | **La API falló del lado del servidor (HTTP 500)…** Es distinto del saldo insuficiente. |
 
 El de "tardó demasiado" aparece si la API se queda callada más de 10 segundos: **La API no respondió a tiempo…** No hace falta provocarlo si el tiempo de la sustentación es corto; el texto está en la app.
 
-**Cerrar sesión** (en Saldo o en Transferir) borra el token del almacén y vuelve a **Entrar**.
+**Cerrar sesión** (en Saldo o en Transferir) borra el token del almacén, vuelve a **Entrar** y limpia la pila. El botón atrás de Android no deja ver Saldo otra vez.
 
 ---
 
@@ -223,8 +228,8 @@ En un teléfono real, `10.0.2.2` no sirve. Ahí se usa la IP del computador en e
 | La app dice que no hay conexión | La API está en la ventana del paso 3, con `0.0.0.0:5080`. El emulador está encendido. No cambió la dirección dentro de la app. |
 | Swagger no abre | `docker compose ps` muestra los dos contenedores en `healthy`. Volvió a correr el paso 3 desde `src/Breb.Cuentas`. |
 | Consultar saldo dice que la cuenta no existe | Faltó el comando de `scripts/cuentas-base.sql` del paso 2. |
-| Saldo o Transferir dicen **No hay sesión** | Nadie pulsó **Entrar**, o se cerró la sesión, o la API respondió 401 y el token se borró. Vaya a **Entrar**. |
-| Transferir con `ana.operadora` dice que no tiene permiso | Escribió a Ana en **Entrar** pero no pulsó **Entrar**. El token guardado sigue siendo el de `luis.consulta`. Pulse **Entrar** con la operadora y después **Transferir**. |
+| La app vuelve sola a Entrar al abrir Saldo o Transferir | No hay token, o el que había ya venció. Pulse **Entrar** de nuevo. |
+| Transferir dice que no tiene permiso con la operadora | La sesión sigue siendo la de `luis.consulta`. **Cerrar sesión**, entre con `ana.operadora` y pulse **Ir a transferir**. |
 | Al entrar, un mensaje del almacén seguro | El emulador a veces exige un PIN de prueba para cifrar. Póngalo y vuelva a pulsar **Entrar**. La app no se cierra por eso. |
 | La app se cierra al abrir un APK copiado a mano | Lo generó sin `-p:EmbedAssembliesIntoApk=true`. Repita el comando de la sección 5. |
 
@@ -260,7 +265,7 @@ En Debug, .NET para Android usa Fast Deployment: los ensamblados no van dentro d
 
 **7. ¿En qué se diferencia un 401 de un 403?**
 
-401: no está autenticado. Clave mala en **Entrar**, o el token ya no sirve (venció a los 15 minutos). En Saldo y Transferir, un 401 borra la sesión y pide volver a **Entrar**. 403: sí está autenticado, pero el rol no alcanza. `luis.consulta` puede ver el saldo y no puede retener, porque esa ruta exige el rol `operador`. Entrar otra vez como Luis no lo arregla: hay que entrar como `ana.operadora`.
+401: no está autenticado. Clave mala en **Entrar**, o el token ya no sirve (venció a los 15 minutos). En Saldo y Transferir, un 401 borra la sesión y vuelve a **Entrar** con la pila vacía. 403: sí está autenticado, pero el rol no alcanza. `luis.consulta` puede ver el saldo y no puede retener, porque esa ruta exige el rol `operador`. Entrar otra vez como Luis no lo arregla: hay que **Cerrar sesión** y entrar como `ana.operadora`.
 
 **8. ¿Por qué el HTTP sin cifrar solo está en Debug?**
 
@@ -268,7 +273,7 @@ La API del laboratorio es `http://`, sin TLS. Desde Android 8 el sistema bloquea
 
 **9. ¿Por qué hay tres pantallas y no una?**
 
-El Evaluable 3 pide exactamente tres: Entrar (pide el JWT), Saldo (disponible y retenido) y Transferir (dispara y muestra el resultado). El Shell las pone en una barra de pestañas. No hay una cuarta. Saldo y Transferir no vuelven a hacer login: leen el token guardado. Si no hay sesión, dicen que vaya a **Entrar** y no llaman a la API.
+El Evaluable 3 pide exactamente tres: Entrar (pide el JWT), Saldo (disponible y retenido) y Transferir (dispara y muestra el resultado). No hay una cuarta ni una barra para saltar de una a otra. Al abrir solo está Entrar. Un login correcto empuja Saldo. **Ir a transferir** empuja Transferir, y **Volver a saldo** (o la flecha atrás) regresa. **Cerrar sesión** borra el token y vuelve a Entrar vaciando la pila, para que el atrás de Android no reabra Saldo. Si Saldo o Transferir aparecen sin un token vigente, vuelven a Entrar. Si al abrir ya hay un token que no venció, la app entra sola a Saldo.
 
 **10. ¿Por qué la app no confirma el abono?**
 
@@ -280,14 +285,14 @@ Confirmar es `POST /transferencias/{id}/confirmar-abono` y exige el rol `banco` 
 
 Hable mirando el emulador. La API ya está en `0.0.0.0:5080` y la app ya está instalada. No explique Docker en estos dos minutos.
 
-**0:00 — Entrar.** "La app tiene tres pestañas: Entrar, Saldo y Transferir. Entro con luis.consulta. La API me devuelve un JWT de 15 minutos. No lo dejo en una variable: queda cifrado en el almacén seguro del teléfono. La clave no se guarda." Pulse **Entrar**. Muestre el texto verde y el salto a Saldo.
+**0:00 — Entrar.** "No hay pestañas: al abrir solo está Entrar. No se puede ir a Saldo sin sesión. Entro con luis.consulta. La API me devuelve un JWT de 15 minutos. No lo dejo en una variable: queda cifrado en el almacén seguro del teléfono." Pulse **Entrar**. Muestre el salto a Saldo.
 
 **0:25 — Saldo.** "Esta pantalla no pide la clave otra vez. Usa el token guardado." Pulse **Consultar saldo**. "Acá está lo disponible y lo retenido. Si la API estuviera apagada, vería un mensaje y la pantalla no se congelaría."
 
-**0:45 — 403.** Pase a **Transferir** y pulse **Transferir**. "Luis sí está autenticado, pero transferir exige el rol operador. Esto es un 403, no un 401. La sesión sigue. Un 401 sería clave mala o token vencido, y ahí sí se borra."
+**0:45 — 403.** Pulse **Ir a transferir** y luego **Transferir**. "Luis sí está autenticado, pero transferir exige el rol operador. Esto es un 403, no un 401. La sesión sigue. Un 401 borra el token y vuelve a Entrar."
 
-**1:05 — Operadora.** Vuelva a **Entrar**, ponga `ana.operadora` / `Operadora-2026` y pulse **Entrar**. "Este token reemplaza al anterior."
+**1:05 — Operadora.** Pulse **Cerrar sesión**. "El token se borra y la pila queda vacía: el atrás del teléfono no vuelve a Saldo." Ponga `ana.operadora` / `Operadora-2026` y pulse **Entrar**.
 
-**1:20 — Transferir.** En **Transferir**, monto 10, pulse **Transferir**. "Mientras espera, el botón está apagado. La API apartó 10 UVB: el disponible baja y el retenido sube. El número lo inventa el servidor. Si el banco no confirma, a los 15 segundos la saga devuelve la plata sola. No es el conciliador de 5 minutos. Por eso la pantalla lo avisa."
+**1:25 — Transferir.** Pulse **Ir a transferir**, monto 10, **Transferir**. "Mientras espera, el botón está apagado. La API apartó 10 UVB. Si el banco no confirma, a los 15 segundos la saga devuelve la plata sola. **Volver a saldo** regresa sin cerrar la sesión."
 
-**1:50 — Cierre.** "Tres pantallas, un servicio para el HTTP, el token en SecureStorage, y los errores (sin red, tiempo agotado, 401, 403, saldo insuficiente y 500) se leen en la misma pantalla."
+**1:50 — Cierre.** "Tres pantallas en fila, un servicio para el HTTP, el token en SecureStorage, y los errores se leen en la misma pantalla."

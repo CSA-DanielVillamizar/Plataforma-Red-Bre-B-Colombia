@@ -55,6 +55,17 @@ public class RecursosDeLasPaginasTests
         Assert.Contains("GetRequiredService<AppShell>", codigo);
     }
 
+    [Fact]
+    public void El_shell_no_ofrece_pestañas()
+    {
+        var xaml = File.ReadAllText(Path.Combine(DirectorioApp(), "AppShell.xaml"));
+        Assert.DoesNotContain("TabBar", xaml);
+        Assert.DoesNotContain("<Tab ", xaml);
+        Assert.Contains("Route=\"login\"", xaml);
+        Assert.DoesNotContain("Route=\"saldo\"", xaml);
+        Assert.DoesNotContain("Route=\"transferencia\"", xaml);
+    }
+
     private static string CuerpoDelConstructor(string codigo)
     {
         var inicio = codigo.IndexOf("public App(", StringComparison.Ordinal);

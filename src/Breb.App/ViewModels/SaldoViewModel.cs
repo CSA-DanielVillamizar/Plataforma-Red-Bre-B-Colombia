@@ -44,6 +44,7 @@ public partial class SaldoViewModel : ViewModelBase
         SesionTexto = MensajesDeApi.SinSesion;
         SaldoTexto = "—";
         SaldoRetenidoTexto = "—";
+        await _nav.IrAsync(Rutas.Login);
     }
 
     [RelayCommand]
@@ -51,10 +52,9 @@ public partial class SaldoViewModel : ViewModelBase
     {
         try
         {
-            var sesion = await _almacen.LeerAsync();
-            SesionTexto = sesion is null
-                ? MensajesDeApi.SinSesion
-                : $"{sesion.Usuario} · rol {sesion.Rol}";
+            var sesion = await GuardiaDeSesion.ParaPantallaAsync(_almacen, _nav, DateTimeOffset.UtcNow);
+            if (sesion is null) return;
+            SesionTexto = $"{sesion.Usuario} · rol {sesion.Rol}";
         }
         catch (ExcepcionAlmacenSeguro ex)
         {
@@ -94,6 +94,7 @@ public partial class SaldoViewModel : ViewModelBase
         var sesion = await _almacen.LeerAsync();
         if (sesion is not null) return sesion;
         MarcarError(MensajesDeApi.SinSesion);
+        await _nav.IrAsync(Rutas.Login);
         return null;
     }
 }

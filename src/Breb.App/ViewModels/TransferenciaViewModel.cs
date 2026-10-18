@@ -61,6 +61,7 @@ public partial class TransferenciaViewModel : ViewModelBase
         if (ex.Codigo != 401 || ex.Operacion == "login") return;
         await _almacen.BorrarAsync();
         SesionTexto = MensajesDeApi.SinSesion;
+        await _nav.IrAsync(Rutas.Login);
     }
 
     [RelayCommand]
@@ -68,10 +69,9 @@ public partial class TransferenciaViewModel : ViewModelBase
     {
         try
         {
-            var sesion = await _almacen.LeerAsync();
-            SesionTexto = sesion is null
-                ? MensajesDeApi.SinSesion
-                : $"{sesion.Usuario} · rol {sesion.Rol}";
+            var sesion = await GuardiaDeSesion.ParaPantallaAsync(_almacen, _nav, DateTimeOffset.UtcNow);
+            if (sesion is null) return;
+            SesionTexto = $"{sesion.Usuario} · rol {sesion.Rol}";
         }
         catch (ExcepcionAlmacenSeguro ex)
         {
@@ -92,6 +92,7 @@ public partial class TransferenciaViewModel : ViewModelBase
         if (sesion is null)
         {
             MarcarError(MensajesDeApi.SinSesion);
+            await _nav.IrAsync(Rutas.Login);
             return;
         }
 
@@ -114,15 +115,19 @@ public partial class TransferenciaViewModel : ViewModelBase
         catch (Exception ex) when (ex is ExcepcionDeApi or HttpRequestException or TaskCanceledException)
         {
             if (ex is ExcepcionDeApi { Codigo: 401 })
+            {
                 await _almacen.BorrarAsync();
+                await _nav.IrAsync(Rutas.Login);
+                return;
+            }
 
             Tono = "ok";
-            Estado = "La transferencia sí quedó registrada, pero no pude refrescar el saldo. Mírelo en la pestaña Saldo.";
+            Estado = "La transferencia sí quedó registrada, pero no pude refrescar el saldo. Use Volver a saldo para verlo.";
         }
     });
 
     [RelayCommand(CanExecute = nameof(NoEstaCargando))]
-    private Task IrASaldoAsync() => _nav.IrAsync(Rutas.Saldo);
+    private Task IrASaldoAsync() => _nav.IrAsync(Rutas.Atras);
 
     [RelayCommand(CanExecute = nameof(NoEstaCargando))]
     private Task CerrarSesionAsync() => EjecutarAsync(async () =>

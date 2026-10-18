@@ -16,6 +16,6 @@ public partial class TransferenciaPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
-        _ = _viewModel.PrepararCommand.ExecuteAsync(null);
+        Dispatcher.DispatchAsync(() => _viewModel.PrepararCommand.ExecuteAsync(null));
     }
 }
