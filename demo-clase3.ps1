@@ -1,4 +1,4 @@
-# ─────────────────────────────────────────────────────────────
+﻿# ─────────────────────────────────────────────────────────────
 #  DEMO CLASE 3 — Saga de Transferencia con Compensación
 #  Red Bre-B Colombia · 190304014-1
 #
@@ -7,11 +7,18 @@
 #    .\demo-clase3.ps1 compensar    -> compensación por timeout (15s)
 #    .\demo-clase3.ps1 reset        -> restablece el saldo a 5000
 #    .\demo-clase3.ps1 estado       -> muestra saldo, sagas y si la app corre
+#
+#  PUERTO: por defecto 5051 (el de Visual Studio con Ctrl+F5).
+#  Si arrancas con 'dotnet run --urls http://localhost:5080', usa:
+#    .\demo-clase3.ps1 compensar -Puerto 5080
 # ─────────────────────────────────────────────────────────────
 
-param([string]$Modo = "")
+param(
+    [string]$Modo = "",
+    [int]$Puerto = 5051
+)
 
-$API    = "http://localhost:5080"
+$API    = "http://localhost:$Puerto"
 $CUENTA = "11111111-1111-1111-1111-111111111111"
 
 function Linea { Write-Host ("=" * 62) -ForegroundColor Cyan }
@@ -25,8 +32,10 @@ function Sql($query) {
     return @($out)
 }
 
+# Filtra por la cuenta de la demo: desde la Clase 4 existe una segunda
+# cuenta (2222...) para el deadlock, y sin el WHERE saldrían dos saldos.
 function Saldo {
-    $r = Sql 'SELECT ''   Disponible: '' || \"SaldoDisponible\" || ''   |   Retenido: '' || \"SaldoRetenido\" FROM \"Cuentas\";'
+    $r = Sql ('SELECT ''   Disponible: '' || \"SaldoDisponible\" || ''   |   Retenido: '' || \"SaldoRetenido\" FROM \"Cuentas\" WHERE \"Id\"=''' + $CUENTA + ''';')
     $t = ($r | Where-Object { $_ -and $_.Trim() -ne "" }) -join "`n"
     if ($t) { Write-Host $t -ForegroundColor White }
     else    { Write-Host "   (sin datos - revisa que la BD este migrada)" -ForegroundColor Red }
@@ -41,7 +50,7 @@ function Sagas {
 }
 
 function ResetSaldo {
-    Sql 'UPDATE \"Cuentas\" SET \"SaldoDisponible\"=5000, \"SaldoRetenido\"=0; DELETE FROM \"MensajesProcesados\"; DELETE FROM \"TransferenciaSagas\";' | Out-Null
+    Sql ('UPDATE \"Cuentas\" SET \"SaldoDisponible\"=5000, \"SaldoRetenido\"=0 WHERE \"Id\"=''' + $CUENTA + '''; DELETE FROM \"MensajesProcesados\"; DELETE FROM \"TransferenciaSagas\";') | Out-Null
 }
 
 function ApiViva {
@@ -67,11 +76,16 @@ function Preflight {
         $fallo = $true
     }
     if (-not (ApiViva)) {
-        Write-Host "`n[X] La aplicacion NO esta corriendo en $API" -ForegroundColor Red
-        Write-Host "    Arrancala en OTRA terminal:" -ForegroundColor Yellow
-        Write-Host "       cd ..\Breb.Platform\Breb.Cuentas" -ForegroundColor White
+        Write-Host "`n[X] La aplicacion NO responde en $API" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "    Si usas VISUAL STUDIO:" -ForegroundColor Yellow
+        Write-Host "       Presiona Ctrl+F5 y espera a ver en la consola:" -ForegroundColor White
+        Write-Host "          Bus started: rabbitmq://localhost/" -ForegroundColor White
+        Write-Host "       El puerto de VS es 5051 (perfil 'http')." -ForegroundColor White
+        Write-Host ""
+        Write-Host "    Si usas TERMINAL:" -ForegroundColor Yellow
         Write-Host "       dotnet run --urls http://localhost:5080" -ForegroundColor White
-        Write-Host "    Espera a ver:  Bus started: rabbitmq://localhost/" -ForegroundColor Yellow
+        Write-Host "       y luego:  .\demo-clase3.ps1 $Modo -Puerto 5080" -ForegroundColor White
         $fallo = $true
     }
 
@@ -81,9 +95,30 @@ function Preflight {
     }
 }
 
+# Desde la Semana 8 la API exige un JWT, y cada operacion pide su ROL:
+#   /retener          -> ana.operadora  (rol operador)
+#   /confirmar-abono  -> core-bancario  (rol banco: lo confirma el banco destino)
+# Cada token se pide UNA vez y se reusa: validar es barato, emitir no.
+# Usuarios de LABORATORIO, documentados: no son secretos.
+$script:Tokens = @{}
+function Encabezados([string]$Usuario, [string]$Clave) {
+    if (-not $script:Tokens.ContainsKey($Usuario)) {
+        try {
+            $cuerpo = @{ usuario = $Usuario; clave = $Clave } | ConvertTo-Json
+            $t = Invoke-RestMethod -Uri "$API/token" -Method Post -Body $cuerpo -ContentType "application/json" -TimeoutSec 10
+            $script:Tokens[$Usuario] = $t.token
+        } catch {
+            Write-Host "   [X] No se pudo obtener un token para $Usuario en $API/token" -ForegroundColor Red
+            Write-Host "       Corre la version de la Semana 8 (segunda sesion) o posterior?" -ForegroundColor Yellow
+            exit 1
+        }
+    }
+    return @{ Authorization = "Bearer $($script:Tokens[$Usuario])" }
+}
+
 function Retener100 {
     try {
-        $r = Invoke-RestMethod -Uri "$API/cuentas/$CUENTA/retener?montoUVB=100" -Method Post -TimeoutSec 10
+        $r = Invoke-RestMethod -Uri "$API/cuentas/$CUENTA/retener?montoUVB=100" -Method Post -Headers (Encabezados "ana.operadora" "Operadora-2026") -TimeoutSec 10
         return $r.transferenciaId
     } catch {
         Write-Host "   [X] La API no respondio: $_" -ForegroundColor Red
@@ -106,18 +141,40 @@ switch ($Modo) {
     $tid = Retener100
     Write-Host "   Transferencia: $tid" -ForegroundColor Yellow
 
-    Start-Sleep -Seconds 3
+    # La confirmacion se PROGRAMA ya, a los 5 s de retener, en segundo plano.
+    # Antes se enviaba despues de consultar el saldo, y cada consulta con
+    # 'docker exec' tarda 1-1.6 s (medido); con Docker lento, la confirmacion
+    # llegaba despues de los 15 s y la saga compensaba en pleno "camino feliz".
+    # Runspace y no Start-Job: Start-Job abre OTRO proceso de PowerShell y en
+    # Windows PowerShell 5.1 tardo ~6 s solo en arrancar (medido: la
+    # confirmacion salia a los 11 s). Un runspace vive en este mismo proceso.
+    $tokenBanco = (Encabezados "core-bancario" "CoreBancario-2026").Authorization
+    $inicio = Get-Date
+    $confirmacion = [powershell]::Create().AddScript({
+        param($url, $autorizacion, $inicioTicks)
+        Start-Sleep -Seconds 5
+        $seg = [math]::Round(((Get-Date).Ticks - $inicioTicks) / 1e7, 1)
+        try {
+            Invoke-RestMethod -Uri $url -Method Post -Headers @{ Authorization = $autorizacion } -TimeoutSec 10 | Out-Null
+            "OK|$seg"
+        } catch { "ERROR $_|$seg" }
+    }).AddArgument("$API/transferencias/$tid/confirmar-abono").AddArgument($tokenBanco).AddArgument($inicio.Ticks)
+    $enCurso = $confirmacion.BeginInvoke()
+
+    Start-Sleep -Seconds 2
     Write-Host "`n3. Saldo tras retener - se retuvieron 100 UVB:" -ForegroundColor White
     Saldo; Sagas
     Write-Host "   ^ 100 UVB salieron de Disponible y pasaron a Retenido." -ForegroundColor Cyan
     Write-Host "     El dinero esta EN TRANSITO: ni en origen ni en destino." -ForegroundColor Cyan
 
     Write-Host "`n4. El banco destino confirma el abono (dentro de los 15s)..." -ForegroundColor White
-    try {
-        Invoke-RestMethod -Uri "$API/transferencias/$tid/confirmar-abono" -Method Post -TimeoutSec 10 | Out-Null
-        Write-Host "   Confirmacion enviada" -ForegroundColor Green
-    } catch {
-        Write-Host "   [X] Error al confirmar: $_" -ForegroundColor Red
+    $resultado = $confirmacion.EndInvoke($enCurso)
+    $confirmacion.Dispose()
+    $estado, $seg = "$($resultado[-1])" -split '\|'
+    if ($estado -eq "OK") {
+        Write-Host "   Confirmacion enviada a los $seg s de retener (limite: 15 s)" -ForegroundColor Green
+    } else {
+        Write-Host "   [X] Error al confirmar a los $seg s: $estado" -ForegroundColor Red
     }
 
     Write-Host "`n   Esperando cierre de la saga..." -ForegroundColor DarkGray

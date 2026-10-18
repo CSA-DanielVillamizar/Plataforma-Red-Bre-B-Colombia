@@ -32,6 +32,33 @@ public class Retencion
     public bool Liberada { get; private set; }
     public DateTime? LiberadaEn { get; private set; }
 
+    /// <summary>
+    /// La retención se liquidó: el dinero salió hacia el banco destino.
+    ///
+    /// POR QUÉ HIZO FALTA AGREGAR ESTO (Issue #46):
+    /// Hasta aquí la retención solo sabía registrar UNO de sus dos finales.
+    /// Si se compensaba, quedaba Liberada = true. Pero si la transferencia se
+    /// completaba bien, el dinero salía de la cuenta y la retención se quedaba
+    /// con Liberada = false para siempre — porque no se liberó, se gastó.
+    ///
+    /// El problema es que la saga se borra al terminar (SetCompletedWhenFinalized),
+    /// así que una transferencia EXITOSA quedaba indistinguible de una huérfana:
+    /// las dos son "retención viva sin saga". Cualquier proceso de reparación
+    /// que se guiara por eso devolvería plata que ya se fue.
+    ///
+    /// Una retención tiene dos finales posibles y el modelo tiene que saber
+    /// cuál ocurrió. Mientras solo registre uno, el otro es invisible, y lo
+    /// invisible no se puede reparar.
+    /// </summary>
+    public bool Liquidada { get; private set; }
+    public DateTime? LiquidadaEn { get; private set; }
+
+    /// <summary>
+    /// ¿Esta retención sigue pendiente de resolución? Ni devuelta ni gastada.
+    /// Es la única definición honesta de "huérfana" cuando además no hay saga.
+    /// </summary>
+    public bool EstaPendiente => !Liberada && !Liquidada;
+
     private Retencion() { }   // EF Core lo necesita
 
     public Retencion(Guid transferenciaId, Guid cuentaId, decimal montoUVB)
@@ -64,6 +91,33 @@ public class Retencion
 
         Liberada = true;
         LiberadaEn = DateTime.UtcNow;
+        return true;
+    }
+
+    /// <summary>
+    /// Marca que el dinero salió: la transferencia se completó y el banco
+    /// destino acreditó el abono. El saldo retenido deja de estar retenido
+    /// porque ya no está, no porque haya vuelto.
+    ///
+    /// Igual que Liberar(), devuelve false si ya estaba liquidada: bajo entrega
+    /// al-menos-una-vez, el aviso de completada también puede llegar dos veces.
+    ///
+    /// Una retención ya liberada NO puede liquidarse: si el dinero volvió a la
+    /// cuenta, no pudo además salir hacia el destino. Que esos dos finales se
+    /// excluyan es un invariante del dominio, no una validación que alguien
+    /// tenga que acordarse de escribir en el consumidor.
+    /// </summary>
+    public bool Liquidar()
+    {
+        if (Liquidada) return false;
+
+        if (Liberada)
+            throw new InvalidOperationException(
+                $"La retención {TransferenciaId} ya fue liberada: no puede liquidarse. " +
+                "El dinero volvió a la cuenta y no pudo salir también hacia el destino.");
+
+        Liquidada = true;
+        LiquidadaEn = DateTime.UtcNow;
         return true;
     }
 }

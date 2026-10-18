@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <!-- El proyecto MAUI no se referencia: arrastra el workload de Android.
+       Estas clases no usan controles, así que se compilan aquí directo. -->
+  <ItemGroup>
+    <Compile Include="..\Breb.App\Modelos\Contratos.cs" Link="App\Contratos.cs" />
+    <Compile Include="..\Breb.App\Servicios\ClienteBrebApi.cs" Link="App\ClienteBrebApi.cs" />
+    <Compile Include="..\Breb.App\Servicios\ExcepcionDeApi.cs" Link="App\ExcepcionDeApi.cs" />
+    <Compile Include="..\Breb.App\ViewModels\SaldoViewModel.cs" Link="App\SaldoViewModel.cs" />
+  </ItemGroup>
+
+</Project>

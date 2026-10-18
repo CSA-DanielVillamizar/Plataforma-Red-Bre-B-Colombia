@@ -81,11 +81,21 @@ namespace Breb.Cuentas.Migrations
                     b.Property<DateTime?>("LiberadaEn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("Liquidada")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LiquidadaEn")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<decimal>("MontoUVB")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
                     b.HasKey("TransferenciaId");
+
+                    b.HasIndex("CreadaEn")
+                        .HasDatabaseName("IX_Retenciones_Pendientes")
+                        .HasFilter("\"Liberada\" = false AND \"Liquidada\" = false");
 
                     b.HasIndex("CuentaId", "Liberada")
                         .HasFilter("\"Liberada\" = false");

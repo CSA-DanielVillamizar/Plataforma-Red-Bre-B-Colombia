@@ -50,3 +50,24 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # ── Observabilidad (Semana 9) ─────────────────────────────────────────────
+  # Jaeger recibe las trazas distribuidas por OTLP y las muestra en su UI.
+  #
+  # Va en un PERFIL aparte: "docker compose up -d" sigue levantando solo
+  # RabbitMQ y PostgreSQL, como siempre. Para incluir Jaeger:
+  #     docker compose --profile observabilidad up -d
+  # Si Jaeger no está corriendo, la aplicación arranca y funciona igual:
+  # simplemente nadie recibe sus trazas.
+  jaeger:
+    image: jaegertracing/jaeger:2.21.0
+    container_name: breb-jaeger
+    profiles: ["observabilidad"]
+    ports:
+      # Puertos propios, NO los de Jaeger por defecto (4317, 4318, 16686):
+      # otro proyecto de esta misma máquina ya los tenía, y si la app enviara
+      # al 4317 sus trazas llegarían al Jaeger AJENO sin ningún error visible.
+      # Es la misma trampa que el RabbitMQ de la Semana 6.
+      - "4327:4317"      # OTLP gRPC: por aquí llegan las trazas
+      - "4328:4318"      # OTLP HTTP
+      - "16687:16686"    # UI de Jaeger
