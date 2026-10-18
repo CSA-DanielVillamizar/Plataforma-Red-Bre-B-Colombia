@@ -2,7 +2,9 @@
 
 Proyecto .NET MAUI creado en la **Clase 14 (Semana 11)** y dotado de arquitectura en la **Clase 15**. Es la referencia de lo que se entrega en el **Evaluable 3** (#28) el 21 de octubre.
 
-Hoy la app hace una cosa completa: pide un token a `/token` con usuario y clave, consulta `/cuentas/{id}/saldo` con ese token en el encabezado `Bearer`, y muestra el saldo en pantalla. Nadie escribe `saldoLabel.Text = ...` en ninguna parte: eso lo hace el binding.
+La app pide un token a `/token` con usuario y clave, consulta `/cuentas/{id}/saldo` con ese token en el encabezado `Bearer`, y muestra el saldo en pantalla. También dispara la transferencia con `POST /cuentas/{id}/retener` (hace falta el rol `operador`: `ana.operadora`) y vuelve a leer el saldo. Nadie escribe `saldoLabel.Text = ...` en ninguna parte: eso lo hace el binding.
+
+La guía para la sustentación del Evaluable 3 está en [`docs/entregas/E3-guia-demo.md`](../../docs/entregas/E3-guia-demo.md).
 
 | Pieza | Archivo | Responsabilidad |
 |---|---|---|

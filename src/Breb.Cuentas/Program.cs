@@ -1,5 +1,6 @@
 ﻿using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Breb.Cuentas.Dominio;
 using Breb.Cuentas.Infraestructura;
 using Breb.Cuentas.Conciliacion;
 using Breb.Cuentas.Consumidores;
@@ -261,7 +262,22 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
 
         // Semana 6: Retener ahora devuelve la RETENCIÓN, no solo muta un número.
         // Queda una fila que dice exactamente quién retuvo cuánto y cuándo.
-        var retencion = cuenta.Retener(transferenciaId, montoUVB);
+        //
+        // El dominio rechaza monto <= 0 y saldo insuficiente con una excepción.
+        // Eso es un pedido inválido (400), no un fallo del servidor (500): si
+        // se escapara, la app móvil no podría distinguir "no le alcanza" de
+        // "la API se cayó". El return de aquí no hace Commit: el using suelta
+        // la transacción y el bloqueo sin haber publicado nada.
+        Retencion retencion;
+        try
+        {
+            retencion = cuenta.Retener(transferenciaId, montoUVB);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.BadRequest(ex.Message);
+        }
+
         db.Retenciones.Add(retencion);
 
         await publishEndpoint.Publish(new FondosRetenidos

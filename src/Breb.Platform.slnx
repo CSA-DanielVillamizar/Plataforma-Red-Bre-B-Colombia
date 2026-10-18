@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="Breb.Cuentas/Breb.Cuentas.csproj" />
   <Project Path="Breb.App/Breb.App.csproj" />
+  <Project Path="Breb.App.Tests/Breb.App.Tests.csproj" />
 </Solution>
