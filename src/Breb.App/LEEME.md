@@ -2,17 +2,19 @@
 
 Proyecto .NET MAUI creado en la **Clase 14 (Semana 11)** y dotado de arquitectura en la **Clase 15**. Es la referencia de lo que se entrega en el **Evaluable 3** (#28) el 21 de octubre.
 
-La app pide un token a `/token` con usuario y clave, consulta `/cuentas/{id}/saldo` con ese token en el encabezado `Bearer`, y muestra el saldo en pantalla. También dispara la transferencia con `POST /cuentas/{id}/retener` (hace falta el rol `operador`: `ana.operadora`) y vuelve a leer el saldo. Ese disparo aparta el dinero y arranca la saga: si el banco destino no confirma en 15 segundos, la plata vuelve sola. Nadie escribe `saldoLabel.Text = ...` en ninguna parte: eso lo hace el binding.
+La app tiene tres pantallas (Shell): Entrar pide un token a `/token`, Saldo consulta `/cuentas/{id}/saldo` con ese token en el encabezado `Bearer`, y Transferir dispara `POST /cuentas/{id}/retener` (hace falta el rol `operador`: `ana.operadora`) y vuelve a leer el saldo. El JWT no vive en el ViewModel: queda en SecureStorage, detrás de `IBovedaSegura`, y se borra al cerrar sesión o al recibir un 401. Ese disparo aparta el dinero y arranca la saga: si el banco destino no confirma en 15 segundos, la plata vuelve sola. Nadie escribe `saldoLabel.Text = ...` en ninguna parte: eso lo hace el binding.
 
 La guía para la sustentación del Evaluable 3 está en [`docs/entregas/E3-guia-demo.md`](../../docs/entregas/E3-guia-demo.md).
 
 | Pieza | Archivo | Responsabilidad |
 |---|---|---|
-| Vista | `MainPage.xaml` | Solo describe qué se ve y a qué se enlaza |
-| ViewModel | `ViewModels/SaldoViewModel.cs` | Propiedades observables, comandos y manejo de error |
-| Servicio | `Servicios/ClienteBrebApi.cs` | Único lugar que conoce rutas, JSON y el token |
+| Vistas | `Vistas/LoginPage.xaml`, `SaldoPage.xaml`, `TransferenciaPage.xaml` | Solo describen qué se ve y a qué se enlaza |
+| Navegación | `AppShell.xaml` | Las tres pestañas: Entrar, Saldo, Transferir |
+| ViewModels | `ViewModels/LoginViewModel.cs`, `SaldoViewModel.cs`, `TransferenciaViewModel.cs` | Propiedades observables, comandos y manejo de error |
+| HTTP | `Servicios/ClienteBrebApi.cs` | Único lugar que conoce rutas, JSON y el encabezado Bearer |
+| Token | `Servicios/AlmacenSesion.cs`, `BovedaSecureStorage.cs` | JWT en SecureStorage, no en un campo |
 | Contratos | `Modelos/Contratos.cs` | Los DTOs de la API, copiados a mano |
-| Composición | `MauiProgram.cs` | Registra el `HttpClient` y resuelve las dependencias |
+| Composición | `MauiProgram.cs` | Registra el `HttpClient`, la bóveda y resuelve las dependencias |
 
 Dos paquetes que **no** vienen con la plantilla y hacen falta:
 

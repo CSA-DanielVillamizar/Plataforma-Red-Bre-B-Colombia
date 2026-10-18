@@ -18,9 +18,19 @@
        Estas clases no usan controles, así que se compilan aquí directo. -->
   <ItemGroup>
     <Compile Include="..\Breb.App\Modelos\Contratos.cs" Link="App\Contratos.cs" />
+    <Compile Include="..\Breb.App\Modelos\CuentaDemo.cs" Link="App\CuentaDemo.cs" />
     <Compile Include="..\Breb.App\Servicios\ClienteBrebApi.cs" Link="App\ClienteBrebApi.cs" />
     <Compile Include="..\Breb.App\Servicios\ExcepcionDeApi.cs" Link="App\ExcepcionDeApi.cs" />
+    <Compile Include="..\Breb.App\Servicios\ExcepcionAlmacenSeguro.cs" Link="App\ExcepcionAlmacenSeguro.cs" />
+    <Compile Include="..\Breb.App\Servicios\IBovedaSegura.cs" Link="App\IBovedaSegura.cs" />
+    <Compile Include="..\Breb.App\Servicios\IAlmacenSesion.cs" Link="App\IAlmacenSesion.cs" />
+    <Compile Include="..\Breb.App\Servicios\AlmacenSesion.cs" Link="App\AlmacenSesion.cs" />
+    <Compile Include="..\Breb.App\Servicios\INavegacion.cs" Link="App\INavegacion.cs" />
+    <Compile Include="..\Breb.App\Servicios\MensajesDeApi.cs" Link="App\MensajesDeApi.cs" />
+    <Compile Include="..\Breb.App\ViewModels\ViewModelBase.cs" Link="App\ViewModelBase.cs" />
+    <Compile Include="..\Breb.App\ViewModels\LoginViewModel.cs" Link="App\LoginViewModel.cs" />
     <Compile Include="..\Breb.App\ViewModels\SaldoViewModel.cs" Link="App\SaldoViewModel.cs" />
+    <Compile Include="..\Breb.App\ViewModels\TransferenciaViewModel.cs" Link="App\TransferenciaViewModel.cs" />
   </ItemGroup>
 
 </Project>

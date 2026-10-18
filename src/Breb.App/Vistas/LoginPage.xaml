@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:DataType="vm:LoginViewModel"
+             x:Class="Breb.App.Vistas.LoginPage"
+             Title="Entrar">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,20" Spacing="14">
+
+            <Label Text="Bre-B · Entrar"
+                   Style="{StaticResource Headline}"
+                   SemanticProperties.HeadingLevel="Level1"/>
+
+            <Label Text="Para ver el saldo sirven luis.consulta y ana.operadora. Para transferir hace falta ana.operadora (rol operador)."
+                   FontSize="13"
+                   TextColor="Gray"
+                   LineBreakMode="WordWrap"/>
+
+            <Label Text="Usuario" FontSize="13"/>
+            <Entry Text="{Binding Usuario}" Placeholder="usuario"/>
+
+            <Label Text="Clave" FontSize="13"/>
+            <Entry Text="{Binding Clave}" IsPassword="True" Placeholder="clave"/>
+
+            <Button Text="Entrar"
+                    Command="{Binding EntrarCommand}"
+                    HorizontalOptions="Fill"/>
+
+            <ActivityIndicator IsRunning="{Binding Cargando}"
+                               IsVisible="{Binding Cargando}"/>
+
+            <Label Text="{Binding Estado}"
+                   FontSize="14"
+                   TextColor="Gray"
+                   LineBreakMode="WordWrap">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding Tono}" Value="error">
+                        <Setter Property="TextColor" Value="#B00020"/>
+                        <Setter Property="FontAttributes" Value="Bold"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Label" Binding="{Binding Tono}" Value="ok">
+                        <Setter Property="TextColor" Value="#1B5E20"/>
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
