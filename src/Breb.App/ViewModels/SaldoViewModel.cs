@@ -6,75 +6,55 @@ using Breb.App.Servicios;
 namespace Breb.App.ViewModels;
 
 /// <summary>
-/// Clase 15: el ViewModel no toca un solo control. Expone propiedades
-/// observables y comandos; el binding del XAML hace el resto.
+/// Pantalla 2: Saldo. Consulta /cuentas/{id}/saldo con el token que ya está
+/// guardado en SecureStorage (hay que iniciar sesión primero, en Login).
 /// </summary>
-public partial class SaldoViewModel : ObservableObject
+public partial class SaldoViewModel(ClienteBrebApi api, SesionSegura sesion, ConsolaLog consola) : ObservableObject
 {
-    // La misma cuenta de demo de las Semanas 2-9 (scripts/cuentas-base.sql).
-    private static readonly Guid CuentaDemo = Guid.Parse("11111111-1111-1111-1111-111111111111");
-
-    private readonly ClienteBrebApi _api;
-    private string? _token;
-
-    public SaldoViewModel(ClienteBrebApi api)
-    {
-        _api = api;
-        Usuario = "luis.consulta";
-        Clave = "Consulta-2026";
-    }
-
-    [ObservableProperty]
-    private string usuario = string.Empty;
-
-    [ObservableProperty]
-    private string clave = string.Empty;
-
-    [ObservableProperty]
-    private string saldoTexto = "—";
-
-    [ObservableProperty]
-    private string estado = "Sin consultar";
-
-    [ObservableProperty]
-    private bool cargando;
+    // Cuenta de demo de las Semanas 2-9 (scripts/cuentas-base.sql).
+    [ObservableProperty] private string cuentaId = "11111111-1111-1111-1111-111111111111";
+    [ObservableProperty] private string saldoTexto = "—";
+    [ObservableProperty] private string retenidoTexto = "—";
+    [ObservableProperty] private string estado = "Sin consultar";
+    [ObservableProperty] private bool cargando;
 
     [RelayCommand]
     private async Task ConsultarSaldoAsync()
     {
         if (Cargando) return;
+        if (!sesion.HaySesion)
+        {
+            Estado = "No hay sesión. Ve a Login e inicia sesión primero.";
+            return;
+        }
+        if (!Guid.TryParse(CuentaId, out var id))
+        {
+            Estado = "El id de cuenta no es un GUID válido.";
+            return;
+        }
+
         Cargando = true;
-        Estado = "Pidiendo token…";
+        Estado = "Consultando saldo…";
         try
         {
-            // Paso 1: login contra /token (Semana 8). El token se guarda en
-            // memoria del ViewModel, nunca en un campo de la vista.
-            var tokenRespuesta = await _api.ObtenerTokenAsync(Usuario, Clave);
-            _token = tokenRespuesta.Token;
-
-            Estado = "Consultando saldo…";
-
-            // Paso 2: /cuentas/{id}/saldo con el Bearer recién emitido.
-            var saldo = await _api.ConsultarSaldoAsync(CuentaDemo, _token);
-
-            SaldoTexto = saldo.SaldoDisponible.ToString("N2", CultureInfo.GetCultureInfo("es-CO")) + " UVB";
-            Estado = $"OK · rol {tokenRespuesta.Rol} · retenido {saldo.SaldoRetenido:N2} UVB";
+            var saldo = await api.ConsultarSaldoAsync(id);
+            var co = CultureInfo.GetCultureInfo("es-CO");
+            SaldoTexto = saldo.SaldoDisponible.ToString("N2", co) + " UVB";
+            RetenidoTexto = saldo.SaldoRetenido.ToString("N2", co) + " UVB";
+            Estado = $"OK · rol {sesion.Rol}";
         }
         catch (HttpRequestException ex)
         {
-            // Este es el error que aparece cuando el HttpClient apunta a
-            // localhost en vez de 10.0.2.2 (Clase 14, trampa 3).
             Estado = $"Sin conexión con la API: {ex.Message}";
+            consola.Error($"red: {ex.Message}");
             SaldoTexto = "—";
         }
         catch (Exception ex)
         {
             Estado = ex.Message;
+            consola.Error(ex.Message);
             SaldoTexto = "—";
         }
-        finally
-        {
-            Cargando = false;
-        }
+        finally { Cargando = false; }
     }
 }

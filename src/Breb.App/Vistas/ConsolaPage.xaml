@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             xmlns:svc="clr-namespace:Breb.App.Servicios"
+             x:DataType="vm:ConsolaViewModel"
+             x:Class="Breb.App.Vistas.ConsolaPage"
+             Title="Consola"
+             BackgroundColor="#0D1117">
+    <Grid RowDefinitions="Auto,*,Auto" Padding="12">
+
+        <Label Grid.Row="0"
+               Text="Consola en vivo · cada paso contra la API"
+               TextColor="#58A6FF" FontSize="15" FontAttributes="Bold"
+               Margin="0,4,0,8"/>
+
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Lineas}"
+                        VerticalScrollBarVisibility="Always">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="svc:LineaLog">
+                    <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="8" Padding="2,1">
+                        <Label Grid.Column="0" Text="{Binding HoraTexto}"
+                               TextColor="#6E7681" FontSize="11" FontFamily="Consolas"/>
+                        <Label Grid.Column="1" Text="{Binding Nivel}"
+                               TextColor="{Binding ColorNivel}" FontSize="11"
+                               FontAttributes="Bold" FontFamily="Consolas" WidthRequest="38"/>
+                        <Label Grid.Column="2" Text="{Binding Mensaje}"
+                               TextColor="#C9D1D9" FontSize="11" FontFamily="Consolas"
+                               LineBreakMode="CharacterWrap"/>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="(sin actividad todavía · usa Login, Saldo o Transferencia)"
+                       TextColor="#6E7681" FontSize="12" HorizontalOptions="Center" Margin="0,20"/>
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <Button Grid.Row="2" Text="Limpiar consola"
+                Command="{Binding LimpiarCommand}"
+                BackgroundColor="#21262D" TextColor="#C9D1D9"
+                Margin="0,8,0,0"/>
+    </Grid>
+</ContentPage>

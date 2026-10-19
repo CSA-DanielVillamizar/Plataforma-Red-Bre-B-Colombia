@@ -3,12 +3,22 @@
     x:Class="Breb.App.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:Breb.App"
+    xmlns:vistas="clr-namespace:Breb.App.Vistas"
     Title="Breb.App">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar>
+        <ShellContent Title="Login"
+                      ContentTemplate="{DataTemplate vistas:LoginPage}"
+                      Route="login" />
+        <ShellContent Title="Saldo"
+                      ContentTemplate="{DataTemplate vistas:SaldoPage}"
+                      Route="saldo" />
+        <ShellContent Title="Transferir"
+                      ContentTemplate="{DataTemplate vistas:TransferenciaPage}"
+                      Route="transferencia" />
+        <ShellContent Title="Consola"
+                      ContentTemplate="{DataTemplate vistas:ConsolaPage}"
+                      Route="consola" />
+    </TabBar>
 
 </Shell>
