@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Breb.App.Pantallas.PanelTrazaView"
+             x:Name="raiz">
+
+    <Border BackgroundColor="#0B1F2A"
+            Stroke="Transparent"
+            Padding="14,12"
+            StrokeShape="RoundRectangle 12">
+        <VerticalStackLayout Spacing="4">
+            <Label Text="OBSERVABILIDAD · ÚLTIMA LLAMADA"
+                   FontSize="10"
+                   TextColor="#5EEAD4"
+                   CharacterSpacing="1"/>
+            <Label Text="{Binding Texto, Source={x:Reference raiz}}"
+                   FontSize="12"
+                   FontFamily="OpenSansRegular"
+                   TextColor="White"
+                   LineBreakMode="WordWrap"/>
+        </VerticalStackLayout>
+    </Border>
+
+</ContentView>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             xmlns:pantallas="clr-namespace:Breb.App.Pantallas"
+             x:DataType="vm:TransferenciaViewModel"
+             x:Class="Breb.App.Pantallas.TransferenciaPage"
+             Title="Transferir">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="28,24" Spacing="14">
+
+            <Label Text="Bre-B · Nueva transferencia"
+                   Style="{StaticResource SubHeadline}"
+                   SemanticProperties.HeadingLevel="Level1"/>
+            <Label Text="{Binding Sesion}"
+                   FontSize="13"
+                   TextColor="{StaticResource Primary}"/>
+
+            <Label Text="Cuenta de origen" FontSize="13" Margin="0,8,0,0"/>
+            <Entry Text="{Binding CuentaOrigen}" FontSize="12" Placeholder="identificador de la cuenta"/>
+
+            <Label Text="Monto (UVB)" FontSize="13"/>
+            <Entry Text="{Binding MontoTexto}" Keyboard="Numeric" Placeholder="100"/>
+
+            <Button Text="Enviar transferencia"
+                    Command="{Binding EnviarTransferenciaCommand}"
+                    HorizontalOptions="Fill"/>
+
+            <ActivityIndicator IsRunning="{Binding Cargando}" IsVisible="{Binding Cargando}"/>
+
+            <BoxView HeightRequest="1" BackgroundColor="LightGray" Margin="0,6"/>
+
+            <Label Text="Última transferencia" FontSize="13" TextColor="Gray"/>
+            <Label Text="{Binding UltimaTransferencia}" FontSize="14" LineBreakMode="WordWrap"/>
+
+            <Label Text="{Binding Mensaje}"
+                   IsVisible="{Binding HayMensaje}"
+                   FontSize="14"
+                   TextColor="{StaticResource Tertiary}"
+                   LineBreakMode="WordWrap">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding MensajeEsError}" Value="True">
+                        <Setter Property="TextColor" Value="#B91C1C"/>
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+
+            <pantallas:PanelTrazaView Texto="{Binding Observabilidad}"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

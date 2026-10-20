@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             xmlns:pantallas="clr-namespace:Breb.App.Pantallas"
+             x:DataType="vm:InicioSesionViewModel"
+             x:Class="Breb.App.Pantallas.InicioSesionPage"
+             Title="Inicio de sesión"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="28,40" Spacing="16">
+
+            <Label Text="SQUAD DATOS · TUNING · OBSERVABILIDAD"
+                   FontSize="11"
+                   TextColor="{StaticResource Primary}"
+                   CharacterSpacing="1"/>
+            <Label Text="Bre-B"
+                   Style="{StaticResource Headline}"
+                   SemanticProperties.HeadingLevel="Level1"/>
+            <Label Text="Inicia sesión para consultar tu saldo y mover fondos."
+                   FontSize="14"
+                   TextColor="Gray"/>
+
+            <Label Text="Usuario" FontSize="13" Margin="0,16,0,0"/>
+            <Entry Text="{Binding Usuario}" Placeholder="usuario" Keyboard="Plain"/>
+
+            <Label Text="Clave" FontSize="13"/>
+            <Entry Text="{Binding Clave}" IsPassword="True" Placeholder="clave"/>
+
+            <Button Text="Iniciar sesión"
+                    Command="{Binding IniciarSesionCommand}"
+                    HorizontalOptions="Fill"
+                    Margin="0,8,0,0"/>
+
+            <ActivityIndicator IsRunning="{Binding Cargando}" IsVisible="{Binding Cargando}"/>
+
+            <Label Text="{Binding Mensaje}"
+                   IsVisible="{Binding HayMensaje}"
+                   FontSize="14"
+                   TextColor="{StaticResource Tertiary}"
+                   LineBreakMode="WordWrap">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding MensajeEsError}" Value="True">
+                        <Setter Property="TextColor" Value="#B91C1C"/>
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+
+            <pantallas:PanelTrazaView Texto="{Binding Observabilidad}" Margin="0,12,0,0"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
