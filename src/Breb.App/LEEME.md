@@ -25,6 +25,8 @@ dotnet add package Microsoft.Extensions.Http
 
 El proyecto está en la solución `src/Breb.Platform.slnx`, junto a `Breb.Cuentas`.
 
+> **¿Va a presentar el Evaluable 3?** Empiece por **[`GUIA-E3.md`](GUIA-E3.md)**: los cuatro pasos en orden, con la comprobación de cada uno y qué hacer cuando falla. Este LEEME es la referencia de fondo; la guía es para seguirla en la máquina.
+
 ---
 
 ## ⚠️ Antes de compilar: clone el repositorio en una ruta corta
