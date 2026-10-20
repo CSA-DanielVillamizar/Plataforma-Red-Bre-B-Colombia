@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:DataType="vm:TransferenciaViewModel"
+             x:Class="Breb.App.Vistas.TransferenciaPage"
+             Title="Transferir">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,20" Spacing="18">
+
+            <Label Text="Cuenta origen" FontSize="13"/>
+            <Entry Text="{Binding CuentaOrigen}"
+                   IsSpellCheckEnabled="False"
+                   IsTextPredictionEnabled="False"/>
+
+            <Label Text="Monto (UVB)" FontSize="13"/>
+            <Entry Text="{Binding Monto}"
+                   Keyboard="Numeric"/>
+
+            <Button Text="Transferir"
+                    Command="{Binding TransferirCommand}"
+                    HorizontalOptions="Fill"/>
+
+            <ActivityIndicator IsRunning="{Binding Cargando}"
+                               IsVisible="{Binding Cargando}"/>
+
+            <BoxView HeightRequest="1" BackgroundColor="LightGray" Margin="0,10"/>
+
+            <Label Text="{Binding Resultado}"
+                   FontSize="15"
+                   LineBreakMode="WordWrap"/>
+
+            <Label Text="{Binding Estado}"
+                   FontSize="13"
+                   TextColor="Gray"
+                   LineBreakMode="WordWrap"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
