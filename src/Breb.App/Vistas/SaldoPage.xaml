@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:DataType="vm:SaldoViewModel"
+             x:Class="Breb.App.Vistas.SaldoPage"
+             Title="Saldo"
+             BackgroundColor="{StaticResource BrebFondo}">
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+
+            <Border StrokeThickness="0" Background="{StaticResource BrebHeaderBrush}"
+                    StrokeShape="RoundRectangle 0,0,28,28" Padding="24,40,24,28">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="💰  Saldo" FontSize="26" FontAttributes="Bold" TextColor="White"/>
+                    <Label Text="Consulta el saldo de una cuenta" FontSize="13" TextColor="#E6DCFF"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Padding="20,20" Spacing="18">
+
+                <!-- Tarjeta grande del saldo -->
+                <Border Style="{StaticResource Tarjeta}">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="SALDO DISPONIBLE" Style="{StaticResource EtiquetaCampo}"/>
+                        <Label Text="{Binding SaldoTexto}" FontSize="40" FontAttributes="Bold"
+                               TextColor="{StaticResource BrebPrimario}"/>
+                        <Label Text="{Binding RetenidoTexto, StringFormat='Retenido: {0}'}"
+                               FontSize="15" TextColor="{StaticResource BrebTextoSuave}"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Tarjeta de consulta -->
+                <Border Style="{StaticResource Tarjeta}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="CUENTA (GUID)" Style="{StaticResource EtiquetaCampo}"/>
+                        <Border Style="{StaticResource MarcoEntry}">
+                            <Entry Text="{Binding CuentaId}" Placeholder="id de cuenta" FontSize="13"/>
+                        </Border>
+                        <Button Text="Consultar saldo"
+                                Command="{Binding ConsultarSaldoCommand}"
+                                Style="{StaticResource BotonPrimario}"/>
+                        <ActivityIndicator IsRunning="{Binding Cargando}" IsVisible="{Binding Cargando}"
+                                           Color="{StaticResource BrebPrimario}"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label Text="{Binding Estado}" FontSize="13"
+                       TextColor="{StaticResource BrebTextoSuave}" LineBreakMode="WordWrap"/>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

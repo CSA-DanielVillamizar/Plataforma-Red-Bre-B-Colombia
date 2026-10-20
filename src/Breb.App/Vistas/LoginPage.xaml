@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:DataType="vm:LoginViewModel"
+             x:Class="Breb.App.Vistas.LoginPage"
+             Title="Login"
+             BackgroundColor="{StaticResource BrebFondo}">
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+
+            <!-- Encabezado con degradado -->
+            <Border StrokeThickness="0" Background="{StaticResource BrebHeaderBrush}"
+                    StrokeShape="RoundRectangle 0,0,28,28" Padding="24,40,24,28">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="🇨🇴  Bre-B" FontSize="26" FontAttributes="Bold" TextColor="White"/>
+                    <Label Text="Red de pagos inmediatos · Iniciar sesión"
+                           FontSize="13" TextColor="#E6DCFF"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Padding="20,20" Spacing="18">
+
+                <!-- Selector de usuario -->
+                <Label Text="ELIGE UN USUARIO" Style="{StaticResource EtiquetaCampo}"/>
+                <CollectionView ItemsSource="{Binding Usuarios}" HeightRequest="72"
+                                SelectionMode="None">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Horizontal" ItemSpacing="10"/>
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:UsuarioDemo">
+                            <Border StrokeThickness="0" Padding="14,10"
+                                    BackgroundColor="White" StrokeShape="RoundRectangle 14"
+                                    WidthRequest="150">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LoginViewModel}}, Path=SeleccionarUsuarioCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+                                <VerticalStackLayout Spacing="4">
+                                    <Border Padding="8,2" StrokeThickness="0"
+                                            BackgroundColor="{Binding ColorHex}"
+                                            StrokeShape="RoundRectangle 10" HorizontalOptions="Start">
+                                        <Label Text="{Binding Rol}" FontSize="10"
+                                               FontAttributes="Bold" TextColor="White"/>
+                                    </Border>
+                                    <Label Text="{Binding Usuario}" FontSize="13"
+                                           FontAttributes="Bold" TextColor="{StaticResource BrebTexto}"/>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Tarjeta de credenciales -->
+                <Border Style="{StaticResource Tarjeta}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="USUARIO" Style="{StaticResource EtiquetaCampo}"/>
+                        <Border Style="{StaticResource MarcoEntry}">
+                            <Entry Text="{Binding Usuario}" Placeholder="usuario"/>
+                        </Border>
+
+                        <Label Text="CLAVE" Style="{StaticResource EtiquetaCampo}"/>
+                        <Border Style="{StaticResource MarcoEntry}">
+                            <Entry Text="{Binding Clave}" IsPassword="True" Placeholder="clave"/>
+                        </Border>
+
+                        <Button Text="Iniciar sesión"
+                                Command="{Binding IniciarSesionCommand}"
+                                Style="{StaticResource BotonPrimario}"
+                                Margin="0,6,0,0"/>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                            <Button Grid.Column="0" Text="¿Quién soy?"
+                                    Command="{Binding QuienSoyCommand}"
+                                    Style="{StaticResource BotonSecundario}"/>
+                            <Button Grid.Column="1" Text="Cerrar sesión"
+                                    Command="{Binding CerrarSesionCommand}"
+                                    Style="{StaticResource BotonPeligro}"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <ActivityIndicator IsRunning="{Binding Cargando}" IsVisible="{Binding Cargando}"
+                                   Color="{StaticResource BrebPrimario}"/>
+
+                <!-- Estado / sesión -->
+                <Border Style="{StaticResource Chip}">
+                    <Label Text="{Binding RolActual, StringFormat='Rol actual: {0}'}"
+                           FontSize="13" FontAttributes="Bold" TextColor="{StaticResource BrebPrimario}"/>
+                </Border>
+                <Label Text="{Binding Estado}" FontSize="13"
+                       TextColor="{StaticResource BrebTextoSuave}" LineBreakMode="WordWrap"/>
+
+                <!-- Detalle de ¿Quién soy? (afirmaciones del token) -->
+                <Border Style="{StaticResource Tarjeta}" IsVisible="{Binding HayQuienSoy}">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="🔎  CONTENIDO DEL TOKEN" Style="{StaticResource EtiquetaCampo}"/>
+                        <Label Text="{Binding QuienSoyTexto}" FontSize="13"
+                               FontFamily="Consolas" TextColor="{StaticResource BrebTexto}"
+                               LineBreakMode="WordWrap"/>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:DataType="vm:TransferenciaViewModel"
+             x:Class="Breb.App.Vistas.TransferenciaPage"
+             Title="Transferir"
+             BackgroundColor="{StaticResource BrebFondo}">
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+
+            <Border StrokeThickness="0" Background="{StaticResource BrebHeaderBrush}"
+                    StrokeShape="RoundRectangle 0,0,28,28" Padding="24,40,24,28">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="⚡  Transferencia" FontSize="26" FontAttributes="Bold" TextColor="White"/>
+                    <Label Text="Retener → confirmar · orquestado por la saga" FontSize="13" TextColor="#E6DCFF"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Padding="20,20" Spacing="18">
+
+                <!-- Datos -->
+                <Border Style="{StaticResource Tarjeta}">
+                    <VerticalStackLayout Spacing="14">
+                        <Label Text="CUENTA ORIGEN (GUID)" Style="{StaticResource EtiquetaCampo}"/>
+                        <Border Style="{StaticResource MarcoEntry}">
+                            <Entry Text="{Binding CuentaOrigen}" Placeholder="cuenta origen" FontSize="13"/>
+                        </Border>
+                        <Label Text="MONTO (UVB)" Style="{StaticResource EtiquetaCampo}"/>
+                        <Border Style="{StaticResource MarcoEntry}">
+                            <Entry Text="{Binding MontoTexto}" Keyboard="Numeric" Placeholder="monto"/>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Pasos -->
+                <Label Text="Cada paso usa su rol automáticamente:" FontSize="12"
+                       TextColor="{StaticResource BrebTextoSuave}" Margin="4,0,0,0"/>
+                <Button Text="1 · Retener  (rol operador)"
+                        Command="{Binding RetenerCommand}"
+                        Style="{StaticResource BotonPrimario}"/>
+                <Button Text="2 · Confirmar abono  (rol banco)"
+                        Command="{Binding ConfirmarAbonoCommand}"
+                        IsEnabled="{Binding HayTransferencia}"
+                        Style="{StaticResource BotonExito}"/>
+                <Button Text="▶  Demo: compensación de saga"
+                        Command="{Binding DemoCompensacionCommand}"
+                        Style="{StaticResource BotonAcento}"/>
+
+                <ActivityIndicator IsRunning="{Binding Cargando}" IsVisible="{Binding Cargando}"
+                                   Color="{StaticResource BrebPrimario}"/>
+
+                <!-- Resultado -->
+                <Border Style="{StaticResource Tarjeta}">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="TRANSFERENCIA ID" Style="{StaticResource EtiquetaCampo}"/>
+                        <Label Text="{Binding TransferenciaId}" FontSize="12" FontAttributes="Bold"
+                               TextColor="{StaticResource BrebTexto}" LineBreakMode="CharacterWrap"/>
+                        <Label Text="{Binding Estado}" FontSize="14" Margin="0,6,0,0"
+                               TextColor="{StaticResource BrebPrimario}" LineBreakMode="WordWrap"/>
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
