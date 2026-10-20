@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:DataType="vm:TransferenciaViewModel"
+             x:Class="Breb.App.Vistas.TransferenciaPage"
+             Title="Transferir">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,20" Spacing="14">
+
+            <Label Text="Bre-B · Transferir"
+                   Style="{StaticResource Headline}"
+                   SemanticProperties.HeadingLevel="Level1"/>
+
+            <Label Text="{Binding SesionTexto}"
+                   FontSize="13"
+                   TextColor="Gray"
+                   LineBreakMode="WordWrap"/>
+
+            <Label Text="La cuenta es la de las demos. El monto se aparta de ahí. Si el banco destino no confirma, vuelve solo en unos 15 segundos."
+                   FontSize="13"
+                   TextColor="Gray"
+                   LineBreakMode="WordWrap"/>
+
+            <Label Text="Monto en UVB" FontSize="13"/>
+            <Entry Text="{Binding MontoTexto}"
+                   Keyboard="Numeric"
+                   Placeholder="10"/>
+
+            <Button Text="Transferir"
+                    Command="{Binding TransferirCommand}"
+                    HorizontalOptions="Fill"/>
+
+            <ActivityIndicator IsRunning="{Binding Cargando}"
+                               IsVisible="{Binding Cargando}"/>
+
+            <Label Text="{Binding ResultadoTransferencia}"
+                   IsVisible="{Binding HayResultado}"
+                   FontSize="15"
+                   LineBreakMode="WordWrap"/>
+
+            <Label Text="Disponible ahora" FontSize="13" TextColor="Gray"/>
+            <Label Text="{Binding SaldoTexto}" FontSize="28" FontAttributes="Bold"/>
+
+            <Label Text="Retenido ahora" FontSize="13" TextColor="Gray"/>
+            <Label Text="{Binding SaldoRetenidoTexto}" FontSize="20"/>
+
+            <Label Text="{Binding Estado}"
+                   FontSize="14"
+                   TextColor="Gray"
+                   LineBreakMode="WordWrap">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding Tono}" Value="error">
+                        <Setter Property="TextColor" Value="#B00020"/>
+                        <Setter Property="FontAttributes" Value="Bold"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Label" Binding="{Binding Tono}" Value="ok">
+                        <Setter Property="TextColor" Value="#1B5E20"/>
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+
+            <Button Text="Volver a saldo"
+                    Command="{Binding IrASaldoCommand}"
+                    HorizontalOptions="Fill"/>
+
+            <Button Text="Cerrar sesión"
+                    Command="{Binding CerrarSesionCommand}"
+                    HorizontalOptions="Fill"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

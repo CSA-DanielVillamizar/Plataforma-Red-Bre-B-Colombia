@@ -1,80 +1,100 @@
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Breb.App.Modelos;
 using Breb.App.Servicios;
 
 namespace Breb.App.ViewModels;
 
-/// <summary>
-/// Clase 15: el ViewModel no toca un solo control. Expone propiedades
-/// observables y comandos; el binding del XAML hace el resto.
-/// </summary>
-public partial class SaldoViewModel : ObservableObject
+/// <summary>Lee disponible y retenido con el token que guardó Entrar. No pide otro login.</summary>
+public partial class SaldoViewModel : ViewModelBase
 {
-    // La misma cuenta de demo de las Semanas 2-9 (scripts/cuentas-base.sql).
-    private static readonly Guid CuentaDemo = Guid.Parse("11111111-1111-1111-1111-111111111111");
-
     private readonly ClienteBrebApi _api;
-    private string? _token;
+    private readonly IAlmacenSesion _almacen;
+    private readonly INavegacion _nav;
 
-    public SaldoViewModel(ClienteBrebApi api)
+    public SaldoViewModel(ClienteBrebApi api, IAlmacenSesion almacen, INavegacion nav)
     {
         _api = api;
-        Usuario = "luis.consulta";
-        Clave = "Consulta-2026";
+        _almacen = almacen;
+        _nav = nav;
+        Estado = "Sin consultar";
+        SesionTexto = MensajesDeApi.SinSesion;
     }
-
-    [ObservableProperty]
-    private string usuario = string.Empty;
-
-    [ObservableProperty]
-    private string clave = string.Empty;
 
     [ObservableProperty]
     private string saldoTexto = "—";
 
     [ObservableProperty]
-    private string estado = "Sin consultar";
+    private string saldoRetenidoTexto = "—";
 
     [ObservableProperty]
-    private bool cargando;
+    private string sesionTexto = string.Empty;
+
+    protected override void AlCambiarCargando()
+    {
+        ConsultarSaldoCommand.NotifyCanExecuteChanged();
+        IrATransferenciaCommand.NotifyCanExecuteChanged();
+        CerrarSesionCommand.NotifyCanExecuteChanged();
+    }
+
+    protected override async Task AlRechazarAsync(ExcepcionDeApi ex)
+    {
+        if (ex.Codigo != 401 || ex.Operacion == "login") return;
+        await _almacen.BorrarAsync();
+        SesionTexto = MensajesDeApi.SinSesion;
+        SaldoTexto = "—";
+        SaldoRetenidoTexto = "—";
+        await _nav.IrAsync(Rutas.Login);
+    }
 
     [RelayCommand]
-    private async Task ConsultarSaldoAsync()
+    private async Task PrepararAsync()
     {
-        if (Cargando) return;
-        Cargando = true;
-        Estado = "Pidiendo token…";
         try
         {
-            // Paso 1: login contra /token (Semana 8). El token se guarda en
-            // memoria del ViewModel, nunca en un campo de la vista.
-            var tokenRespuesta = await _api.ObtenerTokenAsync(Usuario, Clave);
-            _token = tokenRespuesta.Token;
-
-            Estado = "Consultando saldo…";
-
-            // Paso 2: /cuentas/{id}/saldo con el Bearer recién emitido.
-            var saldo = await _api.ConsultarSaldoAsync(CuentaDemo, _token);
-
-            SaldoTexto = saldo.SaldoDisponible.ToString("N2", CultureInfo.GetCultureInfo("es-CO")) + " UVB";
-            Estado = $"OK · rol {tokenRespuesta.Rol} · retenido {saldo.SaldoRetenido:N2} UVB";
+            var sesion = await GuardiaDeSesion.ParaPantallaAsync(_almacen, _nav, DateTimeOffset.UtcNow);
+            if (sesion is null) return;
+            SesionTexto = $"{sesion.Usuario} · rol {sesion.Rol}";
         }
-        catch (HttpRequestException ex)
+        catch (ExcepcionAlmacenSeguro ex)
         {
-            // Este es el error que aparece cuando el HttpClient apunta a
-            // localhost en vez de 10.0.2.2 (Clase 14, trampa 3).
-            Estado = $"Sin conexión con la API: {ex.Message}";
-            SaldoTexto = "—";
+            MarcarError(ex.Message);
         }
-        catch (Exception ex)
-        {
-            Estado = ex.Message;
-            SaldoTexto = "—";
-        }
-        finally
-        {
-            Cargando = false;
-        }
+    }
+
+    [RelayCommand(CanExecute = nameof(NoEstaCargando))]
+    private Task ConsultarSaldoAsync() => EjecutarAsync(async () =>
+    {
+        var sesion = await ExigirSesionAsync();
+        if (sesion is null) return;
+
+        Estado = "Consultando saldo…";
+        var saldo = await _api.ConsultarSaldoAsync(CuentaDemo.Id, sesion.Token);
+        SaldoTexto = FormatoUvb(saldo.SaldoDisponible);
+        SaldoRetenidoTexto = FormatoUvb(saldo.SaldoRetenido);
+        Tono = "ok";
+        Estado = $"OK · rol {sesion.Rol} · retenido {SaldoRetenidoTexto}";
+    });
+
+    [RelayCommand(CanExecute = nameof(NoEstaCargando))]
+    private Task IrATransferenciaAsync() => _nav.IrAsync(Rutas.Transferencia);
+
+    [RelayCommand(CanExecute = nameof(NoEstaCargando))]
+    private Task CerrarSesionAsync() => EjecutarAsync(async () =>
+    {
+        await _almacen.BorrarAsync();
+        SaldoTexto = "—";
+        SaldoRetenidoTexto = "—";
+        SesionTexto = MensajesDeApi.SinSesion;
+        await _nav.IrAsync(Rutas.Login);
+    });
+
+    private async Task<SesionGuardada?> ExigirSesionAsync()
+    {
+        var sesion = await _almacen.LeerAsync();
+        if (sesion is not null) return sesion;
+        MarcarError(MensajesDeApi.SinSesion);
+        await _nav.IrAsync(Rutas.Login);
+        return null;
     }
 }

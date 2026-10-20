@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Breb.App.Servicios;
 using Breb.App.ViewModels;
+using Breb.App.Vistas;
 
 namespace Breb.App;
 
@@ -27,8 +28,17 @@ public static class MauiProgram
 			http.Timeout = TimeSpan.FromSeconds(10);
 		});
 
+		builder.Services.AddSingleton<IBovedaSegura, BovedaSecureStorage>();
+		builder.Services.AddSingleton<IAlmacenSesion, AlmacenSesion>();
+		builder.Services.AddSingleton<INavegacion, NavegacionShell>();
+
+		builder.Services.AddTransient<LoginViewModel>();
 		builder.Services.AddTransient<SaldoViewModel>();
-		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddTransient<TransferenciaViewModel>();
+		builder.Services.AddTransient<LoginPage>();
+		builder.Services.AddTransient<SaldoPage>();
+		builder.Services.AddTransient<TransferenciaPage>();
+		builder.Services.AddSingleton<AppShell>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

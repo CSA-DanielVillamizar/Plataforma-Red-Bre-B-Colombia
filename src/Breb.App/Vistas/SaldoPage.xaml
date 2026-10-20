@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:DataType="vm:SaldoViewModel"
+             x:Class="Breb.App.Vistas.SaldoPage"
+             Title="Saldo">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,20" Spacing="14">
+
+            <Label Text="Bre-B · Saldo"
+                   Style="{StaticResource Headline}"
+                   SemanticProperties.HeadingLevel="Level1"/>
+
+            <Label Text="{Binding SesionTexto}"
+                   FontSize="13"
+                   TextColor="Gray"
+                   LineBreakMode="WordWrap"/>
+
+            <Button Text="Consultar saldo"
+                    Command="{Binding ConsultarSaldoCommand}"
+                    HorizontalOptions="Fill"/>
+
+            <ActivityIndicator IsRunning="{Binding Cargando}"
+                               IsVisible="{Binding Cargando}"/>
+
+            <Label Text="Saldo disponible" FontSize="13" TextColor="Gray"/>
+            <Label Text="{Binding SaldoTexto}"
+                   FontSize="34"
+                   FontAttributes="Bold"/>
+
+            <Label Text="Saldo retenido" FontSize="13" TextColor="Gray"/>
+            <Label Text="{Binding SaldoRetenidoTexto}" FontSize="20"/>
+
+            <Label Text="{Binding Estado}"
+                   FontSize="14"
+                   TextColor="Gray"
+                   LineBreakMode="WordWrap">
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding Tono}" Value="error">
+                        <Setter Property="TextColor" Value="#B00020"/>
+                        <Setter Property="FontAttributes" Value="Bold"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Label" Binding="{Binding Tono}" Value="ok">
+                        <Setter Property="TextColor" Value="#1B5E20"/>
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
+
+            <Button Text="Ir a transferir"
+                    Command="{Binding IrATransferenciaCommand}"
+                    HorizontalOptions="Fill"/>
+
+            <Button Text="Cerrar sesión"
+                    Command="{Binding CerrarSesionCommand}"
+                    HorizontalOptions="Fill"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

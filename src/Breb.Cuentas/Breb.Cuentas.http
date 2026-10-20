@@ -29,6 +29,10 @@ Content-Type: application/json
 POST {{api}}/cuentas/{{cuenta}}/retener?montoUVB=10
 Authorization: Bearer {{operador.response.body.token}}
 
+### 4b. Retener más de lo disponible -> 400 (el dominio, no un 500)
+POST {{api}}/cuentas/{{cuenta}}/retener?montoUVB=999999999
+Authorization: Bearer {{operador.response.body.token}}
+
 ### 5. Retener como consulta -> 403
 POST {{api}}/cuentas/{{cuenta}}/retener?montoUVB=10
 Authorization: Bearer {{consulta.response.body.token}}
