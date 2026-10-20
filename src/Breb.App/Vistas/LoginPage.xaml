@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:DataType="vm:LoginViewModel"
+             x:Class="Breb.App.Vistas.LoginPage"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,60" Spacing="18">
+
+            <Label Text="Bre-B"
+                   Style="{StaticResource Headline}"
+                   SemanticProperties.HeadingLevel="Level1"/>
+            <Label Text="Inicie sesión con su usuario del laboratorio"
+                   HorizontalOptions="Center"
+                   TextColor="Gray"/>
+
+            <Label Text="Usuario" FontSize="13"/>
+            <Entry Text="{Binding Usuario}"
+                   Placeholder="ana.operadora"
+                   IsSpellCheckEnabled="False"
+                   IsTextPredictionEnabled="False"/>
+
+            <Label Text="Clave" FontSize="13"/>
+            <Entry Text="{Binding Clave}"
+                   IsPassword="True"
+                   Placeholder="clave"
+                   ReturnCommand="{Binding IniciarSesionCommand}"/>
+
+            <Button Text="Iniciar sesión"
+                    Command="{Binding IniciarSesionCommand}"
+                    HorizontalOptions="Fill"/>
+
+            <ActivityIndicator IsRunning="{Binding Cargando}"
+                               IsVisible="{Binding Cargando}"/>
+
+            <Label Text="{Binding Estado}"
+                   TextColor="{StaticResource Primary}"
+                   LineBreakMode="WordWrap"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

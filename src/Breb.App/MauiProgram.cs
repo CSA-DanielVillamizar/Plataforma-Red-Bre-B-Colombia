@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Breb.App.Servicios;
 using Breb.App.ViewModels;
+using Breb.App.Vistas;
 
 namespace Breb.App;
 
@@ -27,8 +28,16 @@ public static class MauiProgram
 			http.Timeout = TimeSpan.FromSeconds(10);
 		});
 
+		// Un solo dueño del JWT en toda la app (SecureStorage, no una variable global).
+		builder.Services.AddSingleton<SesionSegura>();
+
+		builder.Services.AddTransient<LoginViewModel>();
 		builder.Services.AddTransient<SaldoViewModel>();
+		builder.Services.AddTransient<TransferenciaViewModel>();
+
+		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddTransient<TransferenciaPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

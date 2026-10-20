@@ -9,3 +9,6 @@ public record SolicitudToken(string Usuario, string Clave);
 public record RespuestaToken(string Token, DateTimeOffset Expira, string Tipo, string Rol, double DuracionMinutos);
 
 public record RespuestaSaldo(Guid CuentaId, decimal SaldoDisponible, decimal SaldoRetenido);
+
+// POST /cuentas/{id}/retener?montoUVB=… (rol operador). Arranca la saga de la transferencia.
+public record RespuestaRetencion(Guid TransferenciaId, decimal MontoUVB);

@@ -2,15 +2,27 @@
 
 Proyecto .NET MAUI creado en la **Clase 14 (Semana 11)** y dotado de arquitectura en la **Clase 15**. Es la referencia de lo que se entrega en el **Evaluable 3** (#28) el 21 de octubre.
 
-Hoy la app hace una cosa completa: pide un token a `/token` con usuario y clave, consulta `/cuentas/{id}/saldo` con ese token en el encabezado `Bearer`, y muestra el saldo en pantalla. Nadie escribe `saldoLabel.Text = ...` en ninguna parte: eso lo hace el binding.
+## Evaluable 3: las tres pantallas
+
+| # | Pantalla | Qué hace | Endpoint | Rol |
+|---|---|---|---|---|
+| 1 | Login (`Vistas/LoginPage`) | Pide el JWT y lo guarda en `SecureStorage` | `POST /token` | cualquiera |
+| 2 | Saldo (`MainPage`) | Saldo disponible y retenido | `GET /cuentas/{id}/saldo` | `operador` o `consulta` |
+| 3 | Transferir (`Vistas/TransferenciaPage`) | Retiene fondos y arranca la saga; muestra el id y el saldo después | `POST /cuentas/{id}/retener?montoUVB=` | `operador` |
+
+Usuario para la demo completa: `ana.operadora` / `Operadora-2026`. Con `luis.consulta` la transferencia responde **403**, y la app lo muestra.
 
 | Pieza | Archivo | Responsabilidad |
 |---|---|---|
-| Vista | `MainPage.xaml` | Solo describe qué se ve y a qué se enlaza |
-| ViewModel | `ViewModels/SaldoViewModel.cs` | Propiedades observables, comandos y manejo de error |
-| Servicio | `Servicios/ClienteBrebApi.cs` | Único lugar que conoce rutas, JSON y el token |
+| Vistas | `Vistas/LoginPage.xaml`, `MainPage.xaml`, `Vistas/TransferenciaPage.xaml` | Solo describen qué se ve y a qué se enlaza |
+| ViewModels | `ViewModels/LoginViewModel.cs`, `SaldoViewModel.cs`, `TransferenciaViewModel.cs` | Propiedades observables, comandos, validación y mensajes |
+| Servicio HTTP | `Servicios/ClienteBrebApi.cs` | Único lugar que conoce rutas, JSON y el `Bearer`; convierte todo fallo en `ErrorApi` con un mensaje legible |
+| Sesión | `Servicios/SesionSegura.cs` | Único dueño del JWT: `SecureStorage` (Android Keystore), con expiración |
 | Contratos | `Modelos/Contratos.cs` | Los DTOs de la API, copiados a mano |
-| Composición | `MauiProgram.cs` | Registra el `HttpClient` y resuelve las dependencias |
+| Navegación | `AppShell.xaml` | Login primero; después pestañas Saldo y Transferir |
+| Composición | `MauiProgram.cs` | Registra `HttpClient`, sesión, ViewModels y páginas |
+
+Errores que la app muestra en pantalla en vez de congelarse: API apagada o URL mala, timeout de 10 s, clave incorrecta (401), token vencido, rol sin permiso (403), cuenta inexistente (404) y cualquier otro HTTP (por ejemplo, 500 por saldo insuficiente).
 
 Dos paquetes que **no** vienen con la plantilla y hacen falta:
 
