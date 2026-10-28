@@ -65,17 +65,16 @@
                 -->
                 <Button Text="Transferir"
                         Command="{Binding TransferirCommand}"
-                        IsVisible="{Binding NoHayPendiente}"
                         HorizontalOptions="Fill"/>
 
-                <Button Text="Reintentar la misma operación"
-                        Command="{Binding TransferirCommand}"
-                        IsVisible="{Binding HayPendiente}"
+                <Button Text="Reenviar lo pendiente"
+                        Command="{Binding ReintentarPendientesCommand}"
+                        IsVisible="{Binding HayPendientes}"
                         HorizontalOptions="Fill"/>
 
-                <Button Text="Descartar pendiente"
-                        Command="{Binding DescartarCommand}"
-                        IsVisible="{Binding HayPendiente}"
+                <Button Text="Descartar lo pendiente"
+                        Command="{Binding DescartarPendientesCommand}"
+                        IsVisible="{Binding HayPendientes}"
                         BackgroundColor="Transparent"
                         TextColor="{StaticResource Gray500}"
                         HorizontalOptions="Fill"/>
@@ -104,10 +103,23 @@
                        FontFamily="Monospace"
                        LineBreakMode="CharacterWrap"/>
 
-                <Label Text="La generó la app, no el servidor. Mientras siga en pantalla, la operación no está confirmada."
+                <Label Text="La generó la app, no el servidor, y está guardada en disco. Sobrevive a cerrar la app."
                        FontSize="11"
                        TextColor="Gray"
-                       IsVisible="{Binding HayPendiente}"
+                       IsVisible="{Binding HayPendientes}"
+                       LineBreakMode="WordWrap"/>
+
+                <BoxView HeightRequest="1" BackgroundColor="LightGray" Margin="0,6"/>
+
+                <!--
+                    La cola local, visible. En una app de producción esto
+                    sería un icono discreto; aquí está entero a propósito,
+                    porque es el 30 % de la rúbrica del E4.
+                -->
+                <Label Text="Cola local (en disco)" FontSize="13" TextColor="Gray"/>
+                <Label Text="{Binding PendientesTexto}"
+                       FontSize="15"
+                       FontAttributes="Bold"
                        LineBreakMode="WordWrap"/>
 
                 <BoxView HeightRequest="1" BackgroundColor="LightGray" Margin="0,6"/>

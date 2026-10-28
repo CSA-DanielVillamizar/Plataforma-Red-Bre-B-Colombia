@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Arnés para comprobar que la cola local sobrevive a que el proceso muera.
+
+    No referencia Breb.App: compila LOS MISMOS ARCHIVOS FUENTE. Eso importa,
+    porque lo que se prueba es el código que corre en la app, no una copia
+    parecida. Y es posible porque ColaOperaciones no tiene una sola
+    dependencia de MAUI.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Breb.ColaPrueba</AssemblyName>
+    <RootNamespace>Breb.ColaPrueba</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Breb.App\Modelos\OperacionPendiente.cs" Link="Compartido\OperacionPendiente.cs" />
+    <Compile Include="..\Breb.App\Servicios\ColaOperaciones.cs" Link="Compartido\ColaOperaciones.cs" />
+  </ItemGroup>
+
+</Project>
