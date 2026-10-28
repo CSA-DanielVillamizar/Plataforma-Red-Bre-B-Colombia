@@ -9,3 +9,9 @@ public record SolicitudToken(string Usuario, string Clave);
 public record RespuestaToken(string Token, DateTimeOffset Expira, string Tipo, string Rol, double DuracionMinutos);
 
 public record RespuestaSaldo(Guid CuentaId, decimal SaldoDisponible, decimal SaldoRetenido);
+
+// Clase 18: lo que responde /cuentas/{id}/retener. El campo Repetida es la
+// señal de la Semana 14: cuando llega en true, el servidor reconoció la llave
+// y NO creó una segunda transferencia. La app lo usa para distinguir "se hizo"
+// de "ya estaba hecho" sin tener que adivinarlo.
+public record RespuestaRetencion(Guid TransferenciaId, decimal MontoUVB, bool Repetida);

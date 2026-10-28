@@ -1,0 +1,131 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:DataType="vm:TransferenciaViewModel"
+             x:Class="Breb.App.TransferenciaPage"
+             Title="Transferencia">
+
+    <!--
+        Clase 18 · UI adaptativa
+
+        El layout no pregunta en qué aparato corre. El FlexLayout acomoda sus
+        dos hijos según el ancho que REALMENTE tiene: en un teléfono no caben
+        lado a lado, así que se apilan; en una tableta o en escritorio caben,
+        y se ponen en dos columnas. Wrap="Wrap" es todo el mecanismo.
+
+        Por qué así y no con un "si es teléfono entonces…": el ancho puede
+        cambiar sin cambiar de aparato — al girar el teléfono, al partir la
+        pantalla en Android, al redimensionar la ventana en Windows. Un
+        layout que decide por aparato se equivoca en los tres casos.
+
+        OnIdiom sí se usa, pero sólo para lo único que de verdad depende del
+        aparato y no del ancho: cuánto margen deja el borde de la pantalla.
+        Un teléfono se agarra con la mano y necesita menos margen que una
+        ventana de escritorio.
+    -->
+
+    <ScrollView>
+        <FlexLayout Direction="Row"
+                    Wrap="Wrap"
+                    JustifyContent="Start"
+                    AlignItems="Start"
+                    Padding="{OnIdiom Phone='16,16', Tablet='28,24', Desktop='32,28'}">
+
+            <!-- ── Panel 1: el formulario ──────────────────────────────── -->
+            <!--
+                Grow="1" reparte el espacio sobrante entre los dos paneles.
+                MinimumWidthRequest="320" es la regla que decide todo: cuando
+                los dos paneles no caben en 640 puntos, Wrap los baja uno
+                debajo del otro. Nadie preguntó si es teléfono.
+            -->
+            <VerticalStackLayout Spacing="12"
+                                 FlexLayout.Grow="1"
+                                 MinimumWidthRequest="320"
+                                 Padding="0,0,0,24">
+
+                <Label Text="Bre-B · Transferir"
+                       Style="{StaticResource Headline}"
+                       SemanticProperties.HeadingLevel="Level1"/>
+
+                <Label Text="Usuario" FontSize="13"/>
+                <Entry Text="{Binding Usuario}" Placeholder="usuario"/>
+
+                <Label Text="Clave" FontSize="13"/>
+                <Entry Text="{Binding Clave}" IsPassword="True" Placeholder="clave"/>
+
+                <Label Text="Monto en UVB" FontSize="13"/>
+                <Entry Text="{Binding Monto}" Keyboard="Numeric" Placeholder="100"/>
+
+                <!--
+                    El texto del botón cambia cuando hay una operación con
+                    llave viva. No es cosmético: decirle "Transferir" a un
+                    reintento le haría creer al usuario que está mandando
+                    plata otra vez, cuando es la misma operación.
+                -->
+                <Button Text="Transferir"
+                        Command="{Binding TransferirCommand}"
+                        IsVisible="{Binding NoHayPendiente}"
+                        HorizontalOptions="Fill"/>
+
+                <Button Text="Reintentar la misma operación"
+                        Command="{Binding TransferirCommand}"
+                        IsVisible="{Binding HayPendiente}"
+                        HorizontalOptions="Fill"/>
+
+                <Button Text="Descartar pendiente"
+                        Command="{Binding DescartarCommand}"
+                        IsVisible="{Binding HayPendiente}"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource Gray500}"
+                        HorizontalOptions="Fill"/>
+
+                <ActivityIndicator IsRunning="{Binding Enviando}"
+                                   IsVisible="{Binding Enviando}"/>
+            </VerticalStackLayout>
+
+            <!-- ── Panel 2: qué pasó ───────────────────────────────────── -->
+            <VerticalStackLayout Spacing="12"
+                                 FlexLayout.Grow="1"
+                                 MinimumWidthRequest="320"
+                                 Padding="0,12,0,0">
+
+                <Label Text="Estado" FontSize="13" TextColor="Gray"/>
+                <Label Text="{Binding Estado}"
+                       FontSize="16"
+                       LineBreakMode="WordWrap"/>
+
+                <BoxView HeightRequest="1" BackgroundColor="LightGray" Margin="0,6"/>
+
+                <Label Text="Llave de idempotencia de esta operación"
+                       FontSize="13" TextColor="Gray"/>
+                <Label Text="{Binding LlaveTexto}"
+                       FontSize="12"
+                       FontFamily="Monospace"
+                       LineBreakMode="CharacterWrap"/>
+
+                <Label Text="La generó la app, no el servidor. Mientras siga en pantalla, la operación no está confirmada."
+                       FontSize="11"
+                       TextColor="Gray"
+                       IsVisible="{Binding HayPendiente}"
+                       LineBreakMode="WordWrap"/>
+
+                <BoxView HeightRequest="1" BackgroundColor="LightGray" Margin="0,6"/>
+
+                <Label Text="Resultado" FontSize="13" TextColor="Gray"/>
+                <Label Text="{Binding Resultado}"
+                       FontSize="15"
+                       LineBreakMode="WordWrap"/>
+
+                <Label Text="Saldo de la cuenta origen" FontSize="13" TextColor="Gray"/>
+                <Label Text="{Binding SaldoTexto}"
+                       FontSize="15"
+                       FontAttributes="Bold"
+                       LineBreakMode="WordWrap"/>
+
+            </VerticalStackLayout>
+
+        </FlexLayout>
+    </ScrollView>
+
+</ContentPage>

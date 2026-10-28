@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Json;
 using Breb.App.Modelos;
 
@@ -32,5 +33,41 @@ public sealed class ClienteBrebApi(HttpClient http)
 
         return await respuesta.Content.ReadFromJsonAsync<RespuestaSaldo>()
                ?? throw new InvalidOperationException("Respuesta de /saldo vacía.");
+    }
+
+    /// <summary>
+    /// Clase 18: dispara la transferencia reteniendo los fondos.
+    /// <para>
+    /// La <paramref name="transferenciaId"/> NO es opcional aquí a propósito.
+    /// El endpoint la acepta como opcional para no romper llamadores viejos,
+    /// pero esta app siempre la manda: si la dejara en nulo, el servidor
+    /// inventaría una nueva en cada reintento y volvería el duplicado de la
+    /// Semana 14. Quien decide la identidad de la operación es el cliente,
+    /// porque es donde nace la intención del usuario.
+    /// </para>
+    /// </summary>
+    public async Task<RespuestaRetencion> RetenerAsync(
+        Guid cuentaId, decimal montoUVB, Guid transferenciaId, string token)
+    {
+        var ruta = $"/cuentas/{cuentaId}/retener?montoUVB={montoUVB.ToString(CultureInfo.InvariantCulture)}" +
+                   $"&transferenciaId={transferenciaId}";
+
+        using var solicitud = new HttpRequestMessage(HttpMethod.Post, ruta);
+        solicitud.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var respuesta = await http.SendAsync(solicitud);
+
+        // 403 es el camino esperado si el token no es de rol operador
+        // (Semana 8). Se distingue del resto porque el mensaje tiene que
+        // decirle al usuario algo accionable, no "error 403".
+        if (respuesta.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            throw new InvalidOperationException(
+                "Este usuario no puede retener fondos: hace falta el rol operador.");
+
+        if (!respuesta.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Retención rechazada: HTTP {(int)respuesta.StatusCode}");
+
+        return await respuesta.Content.ReadFromJsonAsync<RespuestaRetencion>()
+               ?? throw new InvalidOperationException("Respuesta de /retener vacía.");
     }
 }
