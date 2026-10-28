@@ -30,6 +30,12 @@ public static class MauiProgram
 		builder.Services.AddTransient<SaldoViewModel>();
 		builder.Services.AddTransient<MainPage>();
 
+		// Clase 18: la segunda pantalla. Sin registrar aqui el ViewModel y la
+		// pagina, el Shell no puede construirla: la pestana sale en blanco y
+		// no aparece ningun error a la vista.
+		builder.Services.AddTransient<TransferenciaViewModel>();
+		builder.Services.AddTransient<TransferenciaPage>();
+
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
