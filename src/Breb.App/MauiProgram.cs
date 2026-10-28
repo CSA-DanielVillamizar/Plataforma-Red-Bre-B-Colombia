@@ -36,6 +36,16 @@ public static class MauiProgram
 		builder.Services.AddTransient<TransferenciaViewModel>();
 		builder.Services.AddTransient<TransferenciaPage>();
 
+		// La cola local. Singleton porque es UNA cola: dos instancias
+		// escribiendo el mismo archivo se pisarian, y el candado que las
+		// serializa vive dentro de la instancia.
+		//
+		// AppDataDirectory es la carpeta privada de la app que el sistema
+		// RESPALDA y no borra al limpiar cache. Si esto apuntara a
+		// CacheDirectory, Android podria borrar las transferencias
+		// pendientes del usuario cuando necesitara espacio.
+		builder.Services.AddSingleton(new ColaOperaciones(FileSystem.AppDataDirectory));
+
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
