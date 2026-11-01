@@ -55,13 +55,40 @@ La trampa original falla **siempre**, así que se descubre rápido. Ésta falla 
 - Entregan el APK. Un compañero clona limpio, compila, instala: **aborta**.
 - El síntoma aparece **en la máquina de otro**, que es la peor forma de descubrir un problema.
 
-**El detector es el tamaño.** Un APK de Debug de ~12 MB no va a abrir en ninguna parte. Uno de ~81 MB sí. Mirar el tamaño antes de entregar cuesta un segundo.
+**El tamaño es una señal, no una garantía.** Lo que el tamaño sí dice, con total confianza, es qué hay **dentro** del APK: uno de Debug de ~12 MB no lleva los ensamblados, uno de ~81 MB sí. Lo que el tamaño **no** dice es si va a arrancar, porque eso depende también del aparato.
+
+### 2a. El experimento de una sola variable
+
+Esto lo objetó Copilot al revisar el PR #67, y tenía razón, así que se midió. **El mismo APK de 12 774 811 bytes, el mismo emulador, y lo único que cambia es lo que quedó en el dispositivo:**
+
+| `.__override__/x86_64` del aparato | Al abrir la app |
+|---|---|
+| 425 ensamblados, dejados por un `dotnet build -t:Run` anterior | **Arranca** (PID 17509) |
+| borrado con `run-as … rm -rf`, sin tocar nada más | **SIGABRT** |
+| instalación limpia tras `adb uninstall` | **SIGABRT** |
+
+Y el de 81,3 MB arranca en instalación limpia con ese directorio **vacío** —0 entradas—: no lo necesita, porque lleva los ensamblados dentro.
+
+Así que el APK de 12 MB **sí abre en algunas partes**: en cualquier aparato donde Fast Deployment haya dejado los ensamblados. Que es, exactamente, la máquina del squad que lo compiló.
+
+### 2b. La prueba de entrega que no se puede engañar
+
+Mirar el tamaño sigue costando un segundo y sigue valiendo la pena, pero no alcanza. Hay **dos** estados sucios que esconden el fallo, no uno: el `obj/` del anfitrión y el `.__override__` del aparato.
 
 ```bash
-rm -rf obj bin          # o: dotnet clean
+rm -rf obj bin                      # limpia el ANFITRION
 dotnet build -f net10.0-android -c Debug -p:EmbedAssembliesIntoApk=true
-ls -l bin/Debug/net10.0-android/*-Signed.apk
+ls -l bin/Debug/net10.0-android/*-Signed.apk     # ~81 MB, no ~12
+
+adb uninstall com.companyname.breb.app           # limpia el APARATO  <-- el paso que faltaba
+adb install -r bin/Debug/net10.0-android/com.companyname.breb.app-Signed.apk
+adb shell monkey -p com.companyname.breb.app -c android.intent.category.LAUNCHER 1
+adb shell pidof com.companyname.breb.app         # un numero = arranco
 ```
+
+`rm -rf obj bin` limpia el primero; **`adb uninstall` limpia el segundo**, porque borra el directorio de datos y con él `.__override__`.
+
+> Un aviso que se deriva de lo mismo: `adb uninstall` también borra `operaciones-pendientes.json`. Para probar la cola, desinstale **antes** de encolar, no después.
 
 ---
 
@@ -119,7 +146,35 @@ adb shell pidof com.companyname.breb.app     # → vacío: el proceso murió
 
 El archivo queda **idéntico**: misma llave, mismo `Intentos: 1`.
 
-> `force-stop` no es cerrar con el botón de atrás ni deslizar la app de recientes: mata el proceso sin avisarle. Es el caso que la rúbrica pide y el que de verdad ocurre cuando Android necesita memoria.
+> `force-stop` no es cerrar con el botón de atrás ni deslizar la app de recientes: mata el proceso sin avisarle, sin darle oportunidad de guardar nada. Es el caso que la rúbrica pide.
+
+### 4b-bis. `force-stop` no es lo que hace Android cuando le falta memoria
+
+Esta también la objetó Copilot en el PR #67, y también se midió. `force-stop` hace **dos** cosas: mata el proceso **y** marca el paquete como detenido.
+
+```bash
+adb shell dumpsys package com.companyname.breb.app | grep -o 'stopped=[a-z]*'
+```
+
+| Momento | `stopped=` |
+|---|---|
+| App abierta | `false` |
+| Después de `am force-stop` | **`true`** |
+| Después de volver a abrirla a mano | `false` |
+| Después de `am kill` | **`false`** |
+
+Esa marca impide que el sistema reactive la app por su cuenta hasta que alguien la abra explícitamente. Cuando Android mata un proceso **por memoria** no la pone. El equivalente de verdad es `am kill`:
+
+```bash
+adb shell input keyevent KEYCODE_HOME     # al fondo primero
+adb shell am kill com.companyname.breb.app
+```
+
+> `am kill` **no hace nada si la app está en primer plano** —medido: el PID 15333 siguió vivo—. Sólo mata procesos en segundo plano, que es justo lo que hace el sistema al recuperar memoria.
+
+Y la cola aguanta las dos. Medido con la llave `a557bd01-eea5-4d8b-9b76-629e8fa357fe`: tras `am kill` el archivo quedó intacto con `Intentos: 1`, y al reabrir, la app mostró *«Quedaron 1 operación(es) de una sesión anterior»*.
+
+Para el E4 conviene saber la diferencia: `force-stop` es la prueba **más dura** y la que pide la rúbrica; `am kill` es la **más parecida** a lo que pasa en un teléfono real con poca memoria. La cola pasa las dos.
 
 ### 4c. Al reabrir, la app lo dice
 
@@ -199,19 +254,40 @@ Recomendación práctica para el 4 de noviembre: **no compilar mientras se demue
 ```bash
 # 1. APK que SI funciona instalado a mano
 cd src/Breb.App
-rm -rf obj bin
+rm -rf obj bin                                   # limpia el ANFITRION
 dotnet build -f net10.0-android -c Debug -p:EmbedAssembliesIntoApk=true
 ls -l bin/Debug/net10.0-android/*-Signed.apk     # ~81 MB, no ~12
 
-# 2. Instalar y lanzar
+# 2. Instalar LIMPIO y lanzar
+adb uninstall com.companyname.breb.app           # limpia el APARATO
 adb install -r bin/Debug/net10.0-android/com.companyname.breb.app-Signed.apk
 adb shell monkey -p com.companyname.breb.app -c android.intent.category.LAUNCHER 1
+adb shell pidof com.companyname.breb.app         # un numero = arranco
 
 # 3. Ver la cola del dispositivo (solo en builds de Debug)
 adb shell run-as com.companyname.breb.app cat files/operaciones-pendientes.json
 
-# 4. Cerrar la app DE VERDAD
+# 4a. Cerrar la app DE VERDAD: la prueba mas dura
 adb shell am force-stop com.companyname.breb.app
+
+# 4b. Lo que hace Android cuando le falta memoria
+adb shell input keyevent KEYCODE_HOME            # am kill no toca el primer plano
+adb shell am kill com.companyname.breb.app
+adb shell dumpsys package com.companyname.breb.app | grep -o 'stopped=[a-z]*'
+```
+
+Y para ver la trampa del aparato, el experimento de una sola variable:
+
+```bash
+# el mismo APK de 12 MB, y solo cambia el dispositivo
+dotnet build -f net10.0-android -c Debug -t:Run     # Fast Deployment llena .__override__
+adb shell run-as com.companyname.breb.app ls 'files/.__override__/x86_64' | wc -l   # 425
+                                                    # -> la app de 12 MB ARRANCA
+
+adb shell am force-stop com.companyname.breb.app
+adb shell run-as com.companyname.breb.app rm -rf 'files/.__override__'
+adb shell monkey -p com.companyname.breb.app -c android.intent.category.LAUNCHER 1
+adb logcat -d | grep "No assemblies found"          # -> el MISMO APK aborta
 ```
 
 Y si algo va lento, antes de culpar al código:
