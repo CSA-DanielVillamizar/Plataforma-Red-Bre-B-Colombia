@@ -228,4 +228,6 @@ $EXE concurrente $C 20         # 20 en paralelo
 $EXE corromper   $C            # y despues: leer
 ```
 
-Lo que falta y es honesto decirlo: **esto se midió en Windows, no en Android.** El mecanismo es el mismo —`File.Move` es atómico en los dos— pero la carpeta y los permisos cambian. La comprobación en un teléfono real es el 4 de noviembre, y es exactamente para lo que sirve esa clase.
+> **Actualización del 31 de octubre.** Cuando se escribió esto, sólo se había medido en Windows. Ya está medido **en Android**, sobre un emulador Pixel 5 con API 33: la operación se guarda en `/data/user/0/<paquete>/files/`, sobrevive a un `am force-stop` —que mata el proceso sin avisarle— y al reabrir la app aparece el mensaje *«Quedaron 1 operación(es) de una sesión anterior»*. Al volver la red se reenvía con la misma llave y la base queda con **exactamente una** retención. Está en [`semana-15-telefono-real.md`](semana-15-telefono-real.md).
+>
+> Lo que sigue sin medirse es un **teléfono físico**: la WiFi real (donde `10.0.2.2` no existe), la instalación por USB y el rendimiento en ARM. Eso es el 4 de noviembre.
