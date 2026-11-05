@@ -31,26 +31,15 @@ public partial class TransferenciaViewModel : ObservableObject
 
     private readonly ClienteBrebApi _api;
     private readonly ColaOperaciones _cola;
-    private string? _token;
+    private readonly SesionUsuario _sesion;
 
-    public TransferenciaViewModel(ClienteBrebApi api, ColaOperaciones cola)
+    public TransferenciaViewModel(ClienteBrebApi api, ColaOperaciones cola, SesionUsuario sesion)
     {
         _api = api;
         _cola = cola;
-
-        // Retener fondos exige rol operador desde la Semana 8. Con
-        // luis.consulta la respuesta es 403, no 401: el servidor sabe
-        // quién es y le dice que no puede.
-        Usuario = "ana.operadora";
-        Clave = "Operadora-2026";
+        _sesion = sesion;
         Monto = "100";
     }
-
-    [ObservableProperty]
-    private string usuario = string.Empty;
-
-    [ObservableProperty]
-    private string clave = string.Empty;
 
     [ObservableProperty]
     private string monto = string.Empty;
@@ -69,6 +58,12 @@ public partial class TransferenciaViewModel : ObservableObject
 
     [ObservableProperty]
     private string pendientesTexto = "Sin operaciones pendientes";
+
+    [ObservableProperty]
+    private string quienEntro = "—";
+
+    [ObservableProperty]
+    private string direccionApi = string.Empty;
 
     [ObservableProperty]
     private bool enviando;
@@ -90,6 +85,18 @@ public partial class TransferenciaViewModel : ObservableObject
     {
         Connectivity.Current.ConnectivityChanged -= AlCambiarLaRed;
         Connectivity.Current.ConnectivityChanged += AlCambiarLaRed;
+
+        DireccionApi = ConfiguracionApi.Descripcion;
+        QuienEntro = _sesion.EstaAutenticado
+            ? $"{_sesion.Usuario} · rol {_sesion.Rol}"
+            : "sin sesión";
+
+        // Advertir ANTES de que toque el botón. Retener exige rol operador
+        // desde la Semana 8: con rol consulta la respuesta es 403, no 401 —
+        // el servidor sabe quién es y le dice que no puede.
+        if (_sesion.EstaAutenticado && !_sesion.PuedeTransferir)
+            Estado = $"Entró con rol {_sesion.Rol}. Retener fondos exige rol operador: " +
+                     "esta pantalla va a recibir 403. Cierre sesión y entre como operador.";
 
         await RefrescarPendientesAsync();
 
@@ -178,13 +185,16 @@ public partial class TransferenciaViewModel : ObservableObject
         Enviando = true;
         try
         {
-            Estado = esReintento ? "Reenviando operación pendiente…" : "Pidiendo token…";
+            Estado = esReintento ? "Reenviando operación pendiente…" : "Enviando transferencia…";
 
-            var token = await _api.ObtenerTokenAsync(Usuario, Clave);
-            _token = token.Token;
+            // Clase 19: el token ya lo trajo la pantalla de entrada. Antes
+            // esta línea pedía uno nuevo en cada intento, lo que significaba
+            // que un reintento sin red fallaba en el LOGIN y nunca llegaba a
+            // la retención — el reintento dependía de dos llamadas en vez de
+            // una, sin ninguna razón.
+            var token = _sesion.TokenVigente();
 
-            Estado = "Enviando transferencia…";
-            var r = await _api.RetenerAsync(op.CuentaId, op.MontoUVB, op.Llave, _token);
+            var r = await _api.RetenerAsync(op.CuentaId, op.MontoUVB, op.Llave, token);
 
             Resultado = r.Repetida
                 ? $"Ya estaba hecha. El servidor reconoció la llave y devolvió la retención " +
@@ -201,12 +211,20 @@ public partial class TransferenciaViewModel : ObservableObject
             await RefrescarPendientesAsync();
 
             // La transferencia NO terminó: los fondos quedaron RETENIDOS.
-            // Falta que el banco destino confirme el abono. Si no lo hace en
-            // 15 segundos, la saga de la Semana 3 compensa y el saldo vuelve.
-            var saldo = await _api.ConsultarSaldoAsync(op.CuentaId, _token);
+            // Falta que el BANCO DESTINO confirme el abono, y eso no lo hace
+            // esta app ni puede hacerlo: /confirmar-abono exige el rol
+            // "banco" y esta app entra con rol "operador". Si la app pudiera
+            // confirmar su propio abono, la saga no serviría para nada —
+            // estaría certificando que llegó plata a un banco con el que
+            // nunca habló. Quien confirma es scripts/confirmar-abono.
+            //
+            // Si nadie confirma en 15 segundos, la saga de la Semana 3
+            // compensa y el saldo vuelve.
+            var saldo = await _api.ConsultarSaldoAsync(op.CuentaId, token);
             SaldoTexto = $"{saldo.SaldoDisponible.ToString("N2", Colombia)} UVB disponibles · " +
                          $"{saldo.SaldoRetenido.ToString("N2", Colombia)} retenidos";
-            Estado = "Esperando confirmación del banco destino…";
+            Estado = "Esperando confirmación del banco destino… " +
+                     "Confirme con scripts/confirmar-abono y refresque el saldo.";
         }
         catch (HttpRequestException)
         {
@@ -241,6 +259,47 @@ public partial class TransferenciaViewModel : ObservableObject
         finally
         {
             Enviando = false;
+        }
+    }
+
+    /// <summary>
+    /// Clase 19: vuelve a pedir el saldo, sin transferir nada.
+    ///
+    /// <para>
+    /// Existe para la demo del E4, y es el botón que hace visible el final
+    /// de la saga. Después de transferir hay 15 segundos de carrera, y el
+    /// resultado se lee en el saldo:
+    /// </para>
+    /// <list type="bullet">
+    ///   <item><b>Confirmada</b> (alguien llamó <c>/confirmar-abono</c>):
+    ///   retenido vuelve a 0 y disponible se QUEDA en 4 900 — la plata
+    ///   salió. En la base, <c>Liquidada = true</c>.</item>
+    ///   <item><b>Compensada</b> (nadie confirmó en 15 s): retenido vuelve a
+    ///   0 y disponible vuelve a 5 000 — la plata regresó. En la base,
+    ///   <c>Liberada = true</c>.</item>
+    /// </list>
+    /// <para>
+    /// Los dos casos dejan retenido en 0, así que mirar sólo el retenido no
+    /// distingue nada. Lo que distingue es el <b>disponible</b>.
+    /// </para>
+    /// </summary>
+    [RelayCommand]
+    private async Task RefrescarSaldoAsync()
+    {
+        try
+        {
+            var saldo = await _api.ConsultarSaldoAsync(CuentaOrigen, _sesion.TokenVigente());
+            SaldoTexto = $"{saldo.SaldoDisponible.ToString("N2", Colombia)} UVB disponibles · " +
+                         $"{saldo.SaldoRetenido.ToString("N2", Colombia)} retenidos";
+            Estado = saldo.SaldoRetenido == 0
+                ? "Ya no hay nada retenido: la saga terminó. Mire el DISPONIBLE para " +
+                  "saber cómo — si bajó, la transferencia se completó; si volvió al " +
+                  "monto original, se compensó."
+                : "Todavía hay fondos retenidos: la saga sigue esperando confirmación.";
+        }
+        catch (Exception ex)
+        {
+            Estado = ex.Message;
         }
     }
 
