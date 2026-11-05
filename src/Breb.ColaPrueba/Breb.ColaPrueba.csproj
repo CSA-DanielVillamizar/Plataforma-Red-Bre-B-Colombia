@@ -21,6 +21,16 @@
   <ItemGroup>
     <Compile Include="..\Breb.App\Modelos\OperacionPendiente.cs" Link="Compartido\OperacionPendiente.cs" />
     <Compile Include="..\Breb.App\Servicios\ColaOperaciones.cs" Link="Compartido\ColaOperaciones.cs" />
+
+    <!--
+      Clase 19: la sesion entra por la misma puerta y por la misma razon —
+      SesionUsuario tampoco tiene una sola dependencia de MAUI, asi que se
+      puede ejercer desde una consola. Esta aqui porque equivocarse en el
+      TIPO de excepcion que lanza borraba transferencias pendientes, y eso
+      tiene que quedar medido y no solo leido.
+    -->
+    <Compile Include="..\Breb.App\Modelos\Contratos.cs" Link="Compartido\Contratos.cs" />
+    <Compile Include="..\Breb.App\Servicios\SesionUsuario.cs" Link="Compartido\SesionUsuario.cs" />
   </ItemGroup>
 
 </Project>

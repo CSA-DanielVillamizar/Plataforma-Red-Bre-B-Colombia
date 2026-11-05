@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:DataType="vm:LoginViewModel"
+             x:Class="Breb.App.LoginPage"
+             Title="Entrar">
+
+    <!--
+        Clase 19: la primera pantalla de la app.
+
+        Centrada a lo alto y limitada a 420 puntos de ancho: en un teléfono
+        ocupa todo, y en Windows no se estira hasta quedar ridícula. Es la
+        misma idea adaptativa de la Clase 18 —manda el ancho disponible, no
+        el tipo de aparato— aplicada al caso más simple.
+    -->
+    <ScrollView>
+        <VerticalStackLayout Padding="{OnIdiom Phone='24,32', Tablet='32,48', Desktop='32,48'}"
+                             Spacing="16"
+                             MaximumWidthRequest="420"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center">
+
+            <Label Text="Bre-B"
+                   FontSize="40"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"/>
+
+            <Label Text="Red de pagos inmediatos · laboratorio PDI74"
+                   FontSize="13"
+                   TextColor="Gray"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center"/>
+
+            <BoxView HeightRequest="1" BackgroundColor="LightGray" Margin="0,8"/>
+
+            <Label Text="Usuario" FontSize="13"/>
+            <Entry Text="{Binding Usuario}"
+                   Placeholder="usuario"
+                   ReturnType="Next"/>
+
+            <Label Text="Clave" FontSize="13"/>
+            <Entry Text="{Binding Clave}"
+                   IsPassword="True"
+                   Placeholder="clave"
+                   ReturnType="Go"
+                   ReturnCommand="{Binding EntrarCommand}"/>
+
+            <Button Text="Entrar"
+                    Command="{Binding EntrarCommand}"
+                    IsEnabled="{Binding NoEntrando}"
+                    HorizontalOptions="Fill"/>
+
+            <ActivityIndicator IsRunning="{Binding Entrando}"
+                               IsVisible="{Binding Entrando}"/>
+
+            <Label Text="{Binding Estado}"
+                   FontSize="13"
+                   TextColor="Gray"
+                   LineBreakMode="WordWrap"/>
+
+            <BoxView HeightRequest="1" BackgroundColor="LightGray" Margin="0,8"/>
+
+            <!--
+                La app dice A DÓNDE está llamando. Parece un detalle y es el
+                que más tiempo ahorra el día de la demo: si aquí sale
+                10.0.2.2 y usted está en un teléfono físico, ya sabe cuál es
+                el problema sin esperar el timeout de 10 segundos.
+            -->
+            <Label Text="API" FontSize="11" TextColor="Gray"/>
+            <Label Text="{Binding DireccionApi}"
+                   FontSize="12"
+                   FontFamily="Monospace"
+                   LineBreakMode="WordWrap"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
