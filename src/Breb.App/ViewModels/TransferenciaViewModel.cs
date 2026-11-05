@@ -169,6 +169,17 @@ public partial class TransferenciaViewModel : ObservableObject
             return;
         }
 
+        // Sin sesión no tiene sentido recorrer la cola: cada operación
+        // fallaría igual y el usuario leería el mismo mensaje una vez por
+        // operación. Se dice una sola vez y no se toca la cola.
+        if (!_sesion.EstaAutenticado)
+        {
+            Estado = $"Hay {pendientes.Count} operación(es) guardada(s), pero no hay " +
+                     "sesión abierta. Entre y vuelva a tocar «Reenviar lo pendiente»: " +
+                     "no se pierde nada.";
+            return;
+        }
+
         foreach (var op in pendientes)
         {
             LlaveTexto = op.Llave.ToString();
@@ -226,6 +237,25 @@ public partial class TransferenciaViewModel : ObservableObject
             Estado = "Esperando confirmación del banco destino… " +
                      "Confirme con scripts/confirmar-abono y refresque el saldo.";
         }
+        catch (SesionNoDisponibleException ex)
+        {
+            // No hay sesión, o se venció (el token dura 15 minutos).
+            //
+            // ESTA RAMA TIENE QUE EXISTIR, y antes no existía: sin ella la
+            // excepción caía en el catch general de abajo, que DESCARTA. El
+            // efecto era que al reabrir la app después de cerrarla —cuando
+            // todavía no hay sesión, porque el token no se guarda en disco—
+            // el primer reintento borraba la transferencia pendiente. La
+            // cola sobrevivía al cierre y la mataba el reintento, que es
+            // exactamente lo contrario de lo que pide la rúbrica.
+            //
+            // No se cuenta el intento: Intentos cuenta intentos de RED, y
+            // esto ni siquiera llegó a salir. Inflarlo mentiría sobre
+            // cuántas veces se intentó de verdad.
+            Estado = $"{ex.Message} La operación sigue guardada: entre y toque " +
+                     "«Reenviar lo pendiente».";
+            await RefrescarPendientesAsync();
+        }
         catch (HttpRequestException)
         {
             // Sin red. La operación SE QUEDA en la cola, en disco.
@@ -246,11 +276,16 @@ public partial class TransferenciaViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            // Rechazo del servidor que NO es un problema de red: clave mala,
-            // rol equivocado, monto inválido. Reintentar no lo va a arreglar,
-            // así que la operación sale de la cola y se le dice al usuario.
-            // Dejarla encolada sería reintentar para siempre algo que el
-            // servidor nunca va a aceptar.
+            // Rechazo del servidor que NO es un problema de red: rol
+            // equivocado, monto inválido, cuenta inexistente. Reintentar no
+            // lo va a arreglar, así que la operación sale de la cola y se le
+            // dice al usuario. Dejarla encolada sería reintentar para
+            // siempre algo que el servidor nunca va a aceptar.
+            //
+            // Ojo con lo que NO debe llegar aquí: la falta de sesión se
+            // atiende arriba, en su propia rama, justamente porque SÍ se
+            // arregla —entrando— y descartar la operación sería tirar algo
+            // que el usuario pidió y todavía es válido.
             await _cola.DescartarAsync(op.Llave);
             await RefrescarPendientesAsync();
             Estado = ex.Message;

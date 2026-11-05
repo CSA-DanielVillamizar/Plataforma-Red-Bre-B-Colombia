@@ -103,10 +103,34 @@ public sealed class SesionUsuario
     /// Los ViewModels llaman esto en vez de leer <see cref="Token"/> para
     /// no repetir la comprobación de nulo ni la de vencimiento.
     /// </summary>
+    /// <exception cref="SesionNoDisponibleException">
+    /// Es un tipo PROPIO y no un <c>InvalidOperationException</c>, y la
+    /// razón es concreta: quien llama tiene que poder distinguir «falta la
+    /// sesión» de «el servidor rechazó la operación». Son cosas opuestas.
+    /// Un rechazo del servidor no se arregla reintentando, así que la
+    /// operación se descarta; que falte la sesión SÍ se arregla —entrando—
+    /// así que la operación tiene que quedarse en la cola.
+    /// <para>
+    /// Costó caro aprenderlo: con <c>InvalidOperationException</c> esto caía
+    /// en el <c>catch</c> general de <c>TransferenciaViewModel</c>, que
+    /// descarta. El resultado era que al reabrir la app después de cerrarla
+    /// —cuando todavía no hay sesión, porque el token no se guarda en
+    /// disco— el primer reintento BORRABA la transferencia pendiente. La
+    /// cola sobrevivía al cierre y la mataba el reintento.
+    /// </para>
+    /// </exception>
     public string TokenVigente() =>
         EstaAutenticado
             ? Token!
-            : throw new InvalidOperationException(
+            : throw new SesionNoDisponibleException(
                 Expiro ? "Su sesión expiró. Vuelva a entrar."
                        : "No hay sesión abierta. Entre primero.");
+}
+
+/// <summary>
+/// Falta la sesión, o se venció. No es un error de la operación: es un
+/// requisito que todavía no se cumple, y se cumple entrando.
+/// </summary>
+public sealed class SesionNoDisponibleException(string mensaje) : Exception(mensaje)
+{
 }
