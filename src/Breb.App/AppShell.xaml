@@ -4,7 +4,31 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:Breb.App"
+    Shell.FlyoutBehavior="Disabled"
     Title="Breb.App">
+
+    <!--
+        Clase 19: la app arranca en la pantalla de entrada.
+
+        El orden importa: el primer hijo del Shell es la página inicial. Al
+        quedar LoginPage de primero, nadie llega a las pestañas sin token, y
+        no hace falta escribir ni una línea que lo verifique.
+
+        FlyoutBehavior="Disabled" para que la entrada no aparezca como una
+        opción de menú: no es un destino al que uno "va", es por donde se
+        empieza. Sin esto, el Shell ofrecería un menú lateral con las tres.
+
+        La navegación entre las dos zonas usa rutas absolutas —"//MainPage"
+        y "//LoginPage"—, con las dos barras. Una ruta relativa APILA la
+        página: al entrar quedaría la de login debajo, y el botón de atrás
+        del teléfono devolvería a una pantalla de login ya usada, con la
+        sesión abierta. Las dos barras reemplazan la raíz y no dejan nada
+        debajo.
+    -->
+    <ShellContent
+        Title="Entrar"
+        ContentTemplate="{DataTemplate local:LoginPage}"
+        Route="LoginPage" />
 
     <!--
         Clase 18: dos pantallas. El TabBar da la navegación sin escribir
@@ -12,7 +36,7 @@
         las pestañas quedan abajo, en Windows arriba. No hay que decidirlo
         ni detectar el aparato.
     -->
-    <TabBar>
+    <TabBar Route="principal">
         <ShellContent
             Title="Saldo"
             ContentTemplate="{DataTemplate local:MainPage}"
