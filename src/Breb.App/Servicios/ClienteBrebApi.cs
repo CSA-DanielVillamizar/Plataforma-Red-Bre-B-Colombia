@@ -12,7 +12,13 @@ public sealed class ClienteBrebApi(HttpClient http)
 {
     public async Task<RespuestaToken> ObtenerTokenAsync(string usuario, string clave)
     {
-        var respuesta = await http.PostAsJsonAsync("/token", new SolicitudToken(usuario, clave));
+        using var solicitud = new HttpRequestMessage(HttpMethod.Post, "/token")
+        {
+            Content = JsonContent.Create(new SolicitudToken(usuario, clave))
+        };
+        AgregarContextoCliente(solicitud);
+
+        var respuesta = await http.SendAsync(solicitud);
 
         // 401 aquí es un camino esperado (clave mala), no una excepción de red.
         if (!respuesta.IsSuccessStatusCode)
@@ -25,6 +31,7 @@ public sealed class ClienteBrebApi(HttpClient http)
     public async Task<RespuestaSaldo> ConsultarSaldoAsync(Guid cuentaId, string token)
     {
         using var solicitud = new HttpRequestMessage(HttpMethod.Get, $"/cuentas/{cuentaId}/saldo");
+        AgregarContextoCliente(solicitud);
         solicitud.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
         var respuesta = await http.SendAsync(solicitud);
@@ -53,6 +60,7 @@ public sealed class ClienteBrebApi(HttpClient http)
                    $"&transferenciaId={transferenciaId}";
 
         using var solicitud = new HttpRequestMessage(HttpMethod.Post, ruta);
+        AgregarContextoCliente(solicitud);
         solicitud.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
         var respuesta = await http.SendAsync(solicitud);
@@ -69,5 +77,48 @@ public sealed class ClienteBrebApi(HttpClient http)
 
         return await respuesta.Content.ReadFromJsonAsync<RespuestaRetencion>()
                ?? throw new InvalidOperationException("Respuesta de /retener vacía.");
+    }
+
+    public async Task<IReadOnlyList<TransferenciaBancaria>> ConsultarPendientesAsync(string token)
+    {
+        using var solicitud = new HttpRequestMessage(HttpMethod.Get, "/transferencias/pendientes");
+        AgregarContextoCliente(solicitud);
+        solicitud.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var respuesta = await http.SendAsync(solicitud);
+        if (!respuesta.IsSuccessStatusCode)
+            throw new InvalidOperationException(
+                $"Consulta bancaria rechazada: HTTP {(int)respuesta.StatusCode}");
+
+        return await respuesta.Content.ReadFromJsonAsync<List<TransferenciaBancaria>>()
+               ?? throw new InvalidOperationException("Respuesta de transferencias vacía.");
+    }
+
+    public async Task ConfirmarAbonoAsync(Guid transferenciaId, string token)
+    {
+        using var solicitud = new HttpRequestMessage(
+            HttpMethod.Post, $"/transferencias/{transferenciaId}/confirmar-abono");
+        AgregarContextoCliente(solicitud);
+        solicitud.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var respuesta = await http.SendAsync(solicitud);
+        if (!respuesta.IsSuccessStatusCode)
+            throw new InvalidOperationException(
+                $"Aprobación bancaria rechazada: HTTP {(int)respuesta.StatusCode}");
+    }
+
+    private static void AgregarContextoCliente(HttpRequestMessage solicitud)
+    {
+        solicitud.Headers.TryAddWithoutValidation(
+            "X-Client-Platform", DeviceInfo.Platform.ToString());
+        solicitud.Headers.TryAddWithoutValidation(
+            "X-Client-Device", ObtenerNombreDispositivo());
+    }
+
+    private static string ObtenerNombreDispositivo()
+    {
+        return string.IsNullOrWhiteSpace(DeviceInfo.Name)
+            ? DeviceInfo.Model
+            : DeviceInfo.Name;
     }
 }

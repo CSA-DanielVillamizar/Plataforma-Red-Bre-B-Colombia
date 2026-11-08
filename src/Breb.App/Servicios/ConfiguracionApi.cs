@@ -47,7 +47,7 @@ public static class ConfiguracionApi
     /// vendría de <c>appsettings</c> o de una pantalla de ajustes.
     /// </para>
     /// </summary>
-    public const string IpEnLaWifi = "";
+    public const string IpEnLaWifi = "192.168.11.140";
 
     public const int Puerto = 5080;
 
@@ -63,6 +63,7 @@ public static class ConfiguracionApi
     private const string MismaMaquina = "127.0.0.1";
 
     private static bool EsAndroid => DeviceInfo.Platform == DevicePlatform.Android;
+    private static bool EsIos => DeviceInfo.Platform == DevicePlatform.iOS;
 
     /// <summary>
     /// ¿Es un emulador o un aparato de verdad? MAUI lo sabe, y es justo lo
@@ -78,7 +79,8 @@ public static class ConfiguracionApi
     /// puso <see cref="IpEnLaWifi"/>. En ese caso cualquier llamada va a
     /// fallar con timeout, y los ViewModels lo dicen ANTES de intentarlo.
     /// </summary>
-    public static bool FaltaConfigurar => EsAndroid && !EsEmulador && !TieneIpDeWifi;
+    public static bool FaltaConfigurar =>
+        (EsAndroid || EsIos) && !EsEmulador && !TieneIpDeWifi;
 
     /// <summary>
     /// La dirección base. Siempre devuelve una URI válida, incluso cuando
@@ -89,8 +91,8 @@ public static class ConfiguracionApi
     /// </summary>
     public static string Direccion =>
         TieneIpDeWifi ? $"http://{IpEnLaWifi}:{Puerto}"
-        : EsAndroid   ? $"http://{AliasDelEmulador}:{Puerto}"
-                      : $"http://{MismaMaquina}:{Puerto}";
+        : EsAndroid && EsEmulador ? $"http://{AliasDelEmulador}:{Puerto}"
+                                 : $"http://{MismaMaquina}:{Puerto}";
 
     /// <summary>
     /// Para mostrar en pantalla. Que la app diga a dónde está llamando
@@ -103,11 +105,13 @@ public static class ConfiguracionApi
         {
             if (TieneIpDeWifi)
                 return $"{Direccion} · IP en la WiFi";
-            if (!EsAndroid)
+            if (!EsAndroid && !EsIos)
                 return $"{Direccion} · esta misma máquina";
-            return EsEmulador
-                ? $"{Direccion} · alias del anfitrión (sólo emulador)"
-                : $"{Direccion} · ⚠️ teléfono físico sin IP configurada";
+            if (EsAndroid && EsEmulador)
+                return $"{Direccion} · alias del anfitrión (sólo emulador)";
+            if (EsIos && EsEmulador)
+                return $"{Direccion} · simulador en esta misma máquina";
+            return $"{Direccion} · ⚠️ teléfono físico sin IP configurada";
         }
     }
 
@@ -123,8 +127,8 @@ public static class ConfiguracionApi
 
     /// <summary>Qué hacer, en una frase, cuando falta la IP.</summary>
     public const string ComoConfigurar =
-        "Esta app corre en un teléfono físico y 10.0.2.2 no existe aquí: ese alias sólo " +
-        "vale dentro del emulador. Ponga la IP de su máquina en la WiFi en " +
+        "Esta app corre en un teléfono físico y necesita la IP de su Mac en la WiFi. " +
+        "10.0.2.2 sólo vale dentro del emulador Android. Ponga la IP de su máquina en " +
         "ConfiguracionApi.IpEnLaWifi (la que sale en ipconfig), vuelva a compilar, y " +
         "antes de culpar al código abra http://esa-ip:5080/swagger en el navegador DEL " +
         "TELÉFONO: si esa página no carga, el problema es la red o el firewall.";

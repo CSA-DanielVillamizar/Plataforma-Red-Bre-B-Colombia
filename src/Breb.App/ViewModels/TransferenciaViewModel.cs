@@ -32,6 +32,7 @@ public partial class TransferenciaViewModel : ObservableObject
     private readonly ClienteBrebApi _api;
     private readonly ColaOperaciones _cola;
     private readonly SesionUsuario _sesion;
+    private OperacionPendiente? _ultimaOperacion;
 
     public TransferenciaViewModel(ClienteBrebApi api, ColaOperaciones cola, SesionUsuario sesion)
     {
@@ -70,6 +71,9 @@ public partial class TransferenciaViewModel : ObservableObject
 
     [ObservableProperty]
     private bool hayPendientes;
+
+    [ObservableProperty]
+    private bool puedeRepetir;
 
     public bool NoHayPendientes => !HayPendientes;
 
@@ -136,6 +140,8 @@ public partial class TransferenciaViewModel : ObservableObject
         // tendría forma de saber que son el mismo movimiento: volvería el
         // duplicado que medimos el 26 de octubre.
         var op = new OperacionPendiente(Guid.NewGuid(), CuentaOrigen, montoUVB, DateTime.UtcNow);
+        _ultimaOperacion = op;
+        PuedeRepetir = true;
 
         // ── Paso 2: a disco, ANTES de intentar la red ───────────────────────
         // Éste es el paso que convierte la app en una que no pierde la
@@ -151,6 +157,25 @@ public partial class TransferenciaViewModel : ObservableObject
 
         // ── Paso 3: ahora sí, la red ────────────────────────────────────────
         await EnviarAsync(op, esReintento: false);
+    }
+
+    [RelayCommand]
+    private async Task RepetirMismaTransaccionAsync()
+    {
+        if (Enviando)
+            return;
+
+        if (_ultimaOperacion is null)
+        {
+            Estado = "Envíe primero una transferencia; después podrá reintentarla " +
+                     "con la misma llave.";
+            return;
+        }
+
+        LlaveTexto = _ultimaOperacion.Llave.ToString();
+        await EnviarAsync(_ultimaOperacion, esReintento: true);
+        Estado = $"Reintento enviado con la MISMA llave {_ultimaOperacion.Llave}. " +
+                 "Revise el log: el servidor no retuvo fondos nuevamente.";
     }
 
     /// <summary>

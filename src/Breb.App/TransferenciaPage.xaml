@@ -75,6 +75,11 @@
                         IsVisible="{Binding HayPendientes}"
                         HorizontalOptions="Fill"/>
 
+                <Button Text="Reintentar la misma transferencia"
+                        Command="{Binding RepetirMismaTransaccionCommand}"
+                        IsEnabled="{Binding PuedeRepetir}"
+                        HorizontalOptions="Fill"/>
+
                 <Button Text="Descartar lo pendiente"
                         Command="{Binding DescartarPendientesCommand}"
                         IsVisible="{Binding HayPendientes}"

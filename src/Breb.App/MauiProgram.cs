@@ -52,6 +52,8 @@ public static class MauiProgram
 		// no aparece ningun error a la vista.
 		builder.Services.AddTransient<TransferenciaViewModel>();
 		builder.Services.AddTransient<TransferenciaPage>();
+		builder.Services.AddTransient<BancoViewModel>();
+		builder.Services.AddTransient<BancoPage>();
 
 		// La cola local. Singleton porque es UNA cola: dos instancias
 		// escribiendo el mismo archivo se pisarian, y el candado que las

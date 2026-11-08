@@ -104,7 +104,9 @@ public partial class LoginViewModel : ObservableObject
             // interfaz INavegacion inyectada; para dos pantallas no paga el
             // costo, y conviene saber que ésta es la línea que habría que
             // cambiar si algún día hay que probar esto sin un Shell vivo.
-            await Shell.Current.GoToAsync("//MainPage");
+            await Shell.Current.GoToAsync(_sesion.Rol == "banco"
+                ? "//BancoPage"
+                : "//MainPage");
         }
         catch (HttpRequestException)
         {
