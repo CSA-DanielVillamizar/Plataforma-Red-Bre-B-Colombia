@@ -17,6 +17,10 @@ builder.Host.UseSerilog((ctx, cfg) => cfg
     // Semana 9: cada línea lleva el TraceId de la operación que la produjo.
     // Con eso, "todo lo que pasó en ESTA transferencia" es un grep, aunque
     // las líneas vengan de la petición HTTP, del consumidor y de la saga.
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("MassTransit", Serilog.Events.LogEventLevel.Warning)
     .WriteTo.Console(outputTemplate:
         "[{Timestamp:HH:mm:ss}] {Level:u3} {Message:lj}  traza={TraceId}{NewLine}{Exception}"));
 
@@ -29,7 +33,7 @@ builder.Host.UseSerilog((ctx, cfg) => cfg
 // instancias, la demanda es de 300 contra un cupo de 100, y la base responde
 // "53300: sorry, too many clients already" — el error que vimos al escalar.
 // La base de datos es un recurso COMPARTIDO: el cupo se reparte, no se replica.
-var connectionString = "Host=localhost;Port=5433;Database=brebcuentas;" +
+var connectionString = "Host=127.0.0.1;Port=5433;Database=brebcuentas;" +
                        "Username=postgres;Password=dev_only_password;" +
                        "SSL Mode=Disable;Timeout=30;Command Timeout=60;" +
                        "Maximum Pool Size=25;Minimum Pool Size=5";
@@ -75,7 +79,7 @@ builder.Services.AddMassTransit(x =>
         // es un ACCESS_REFUSED desconcertante: las credenciales son correctas,
         // solo que contra el broker equivocado.
         // Se comprueba con:  docker port breb-rabbitmq   (vacío = no publicó)
-        cfg.Host("localhost", 5673, "/", h =>
+        cfg.Host("127.0.0.1", 5673, "/", h =>
         {
             h.Username("guest");
             h.Password("guest");
@@ -241,7 +245,7 @@ app.MapPost("/token", (SolicitudToken solicitud, DirectorioUsuarios directorio, 
 // de lo mismo, porque para él son dos peticiones distintas.
 app.MapPost("/cuentas/{cuentaId:guid}/retener",
     async (Guid cuentaId, decimal montoUVB, Guid? transferenciaId,
-           CuentasDbContext db, IPublishEndpoint publishEndpoint) =>
+           CuentasDbContext db, IPublishEndpoint publishEndpoint, HttpContext httpContext) =>
     {
         // ── Bloqueo pesimista sobre la fila de la cuenta (Semana 5) ─────────
         // Primero intentamos concurrencia OPTIMISTA (token xmin + reintento con
@@ -268,6 +272,16 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
         // MEDIDO SIN NINGUNA DE LAS DOS PROTECCIONES: de 60 retenciones solo
         // quedaron 11. Cuarenta y nueve transferencias respondieron HTTP 200
         // al usuario y el dinero nunca se movió.
+        var idTransferencia = transferenciaId ?? Guid.NewGuid();
+        var dispositivo = httpContext.Request.Headers["X-Client-Device"].FirstOrDefault()
+                          ?? "desconocido";
+        var plataforma = httpContext.Request.Headers["X-Client-Platform"].FirstOrDefault()
+                         ?? "desconocida";
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocida";
+        Log.Information(
+            "Retención solicitada: llave={TransferenciaId} monto={Monto} UVB dispositivo={Dispositivo} plataforma={Plataforma} ip={Ip}",
+            idTransferencia, montoUVB, dispositivo, plataforma, ip);
+
         await using var tx = await db.Database.BeginTransactionAsync();
 
         var cuenta = await db.Cuentas
@@ -283,7 +297,6 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
 
         // Si el cliente no manda llave, se comporta como antes. Así los
         // llamadores viejos siguen funcionando — pero sin protección.
-        var idTransferencia = transferenciaId ?? Guid.NewGuid();
         Telemetria.EtiquetarTransferencia(idTransferencia);
 
         // ── La comprobación que hace idempotente a este endpoint ────────────
@@ -301,7 +314,12 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
 
         if (yaRetenida is not null)
         {
-            Log.Information("Retención repetida ignorada: {TransferenciaId}", idTransferencia);
+            Log.Information(
+                "IDEMPOTENCIA: misma llave={TransferenciaId}; no se retiene nuevamente. " +
+                "Retención original={MontoOriginal} UVB; intento={MontoIntento} UVB; " +
+                "dispositivo={Dispositivo} plataforma={Plataforma} ip={Ip}",
+                idTransferencia, yaRetenida.MontoUVB, montoUVB,
+                dispositivo, plataforma, ip);
             return Results.Ok(new
             {
                 transferenciaId = idTransferencia,
@@ -326,8 +344,9 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
         await db.SaveChangesAsync();                   // 3. saldo + evento juntos
         await tx.CommitAsync();                        // 4. y aquí suelta el bloqueo
 
-        Log.Information("Fondos retenidos: {TransferenciaId} por {Monto} UVB",
-                        idTransferencia, montoUVB);
+        Log.Information(
+            "Fondos retenidos: llave={TransferenciaId} monto={Monto} UVB dispositivo={Dispositivo} plataforma={Plataforma} ip={Ip}",
+            idTransferencia, montoUVB, dispositivo, plataforma, ip);
 
         return Results.Ok(new { transferenciaId = idTransferencia, montoUVB, repetida = false });
     })
@@ -336,12 +355,47 @@ app.MapPost("/cuentas/{cuentaId:guid}/retener",
     // con otro rol la respuesta es 403, no 401: sabemos quién es, y no puede.
     .RequireAuthorization(Politicas.Operador);
 
+app.MapGet("/transferencias/pendientes",
+    async (CuentasDbContext db) =>
+    {
+        // Solo llegan al banco las retenciones que siguen vivas. Una
+        // compensación de la saga marca Liberada=true; una aprobación
+        // anterior marca Liquidada=true. Ninguna de las dos debe volver a
+        // aparecer ni poder aprobarse.
+        var pendientes = await db.Retenciones
+            .AsNoTracking()
+            .Where(r => !r.Liberada && !r.Liquidada)
+            .OrderBy(r => r.CreadaEn)
+            .Select(r => new
+            {
+                transferenciaId = r.TransferenciaId,
+                cuentaId = r.CuentaId,
+                montoUVB = r.MontoUVB,
+                creadaEn = r.CreadaEn
+            })
+            .ToListAsync();
+
+        return Results.Ok(pendientes);
+    })
+    .RequireAuthorization(Politicas.BancoDestino);
+
 // Simula la confirmación del core bancario destino.
 // En producción este evento llegaría del banco receptor, no de un endpoint.
 app.MapPost("/transferencias/{transferenciaId:guid}/confirmar-abono",
     async (Guid transferenciaId,
-           CuentasDbContext db, IPublishEndpoint publishEndpoint) =>
+           CuentasDbContext db, IPublishEndpoint publishEndpoint, HttpContext httpContext) =>
     {
+        var retencion = await db.Retenciones
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.TransferenciaId == transferenciaId);
+
+        if (retencion is null)
+            return Results.NotFound("Transferencia pendiente no encontrada.");
+
+        if (retencion.Liberada || retencion.Liquidada)
+            return Results.Conflict(
+                "La transferencia ya fue devuelta o aprobada y no está pendiente.");
+
         await publishEndpoint.Publish(new AbonoConfirmado
         {
             TransferenciaId = transferenciaId,
@@ -354,7 +408,11 @@ app.MapPost("/transferencias/{transferenciaId:guid}/confirmar-abono",
         await db.SaveChangesAsync();
 
         Telemetria.EtiquetarTransferencia(transferenciaId);
-        Log.Information("Abono confirmado para {TransferenciaId}", transferenciaId);
+        Log.Information(
+            "Abono confirmado: llave={TransferenciaId} dispositivo={Dispositivo} ip={Ip}",
+            transferenciaId,
+            httpContext.Request.Headers["X-Client-Device"].FirstOrDefault() ?? "script",
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocida");
         return Results.Accepted();
     })
     // Confirmar un abono lo dice el BANCO DESTINO, no un operador humano.

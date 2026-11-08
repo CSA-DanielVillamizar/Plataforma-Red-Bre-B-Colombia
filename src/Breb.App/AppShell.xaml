@@ -48,4 +48,9 @@
             Route="TransferenciaPage" />
     </TabBar>
 
+    <ShellContent
+        Title="Banco"
+        ContentTemplate="{DataTemplate local:BancoPage}"
+        Route="BancoPage" />
+
 </Shell>

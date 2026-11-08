@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Breb.App.ViewModels"
+             x:DataType="vm:BancoViewModel"
+             x:Class="Breb.App.BancoPage"
+             x:Name="bancoPage"
+             Title="Banco">
+    <Grid Padding="20" RowDefinitions="Auto,Auto,*" RowSpacing="16">
+        <VerticalStackLayout Grid.Row="0" Spacing="6">
+            <Label Text="Bre-B · Bandeja del banco"
+                   Style="{StaticResource Headline}"
+                   SemanticProperties.HeadingLevel="Level1"/>
+            <Label Text="{Binding QuienEntro}" FontSize="14"/>
+            <Label Text="{Binding Estado}" FontSize="13" TextColor="Gray"/>
+        </VerticalStackLayout>
+
+        <Button Grid.Row="1"
+                Text="Actualizar transferencias"
+                Command="{Binding CargarCommand}"
+                IsEnabled="{Binding PuedeCargar}"/>
+
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding Transferencias}"
+                        EmptyView="No hay transferencias pendientes.">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:TransferenciaPendienteViewModel">
+                    <Border Stroke="LightGray"
+                            StrokeThickness="1"
+                            Padding="12"
+                            Margin="0,0,0,10">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto"
+                              ColumnSpacing="12" RowSpacing="6">
+                            <Label Grid.Row="0" Grid.Column="0"
+                                   Text="{Binding TransferenciaId}"
+                                   FontFamily="Monospace"
+                                   FontSize="12"
+                                   LineBreakMode="CharacterWrap"/>
+                            <Label Grid.Row="1" Grid.Column="0"
+                                   Text="{Binding Detalle}"
+                                   FontAttributes="Bold"/>
+                            <Label Grid.Row="2" Grid.Column="0"
+                                   Text="{Binding CreadaTexto}"
+                                   FontSize="12"
+                                   TextColor="Gray"/>
+                            <Button Grid.RowSpan="3" Grid.Column="1"
+                                    Text="Aprobar"
+                                    Command="{Binding Source={x:Reference bancoPage}, Path=BindingContext.AprobarCommand}"
+                                    CommandParameter="{Binding .}"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>
